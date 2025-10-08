@@ -1,0 +1,64 @@
+🔧 Admin – Karyawan Magang
+
+- Filter & pencarian karyawan magang (by divisi, batch, status).
+ -Ubah status: lulus / mundur → otomatis pindah ke daftar magang selesai.
+ -Penilaian akhir (nilai dari admin unit kerja maupun admin utama).
+🔧 Admin – Pelamar
+
+ Penolakan pelamar:
+
+Saat klik Tolak → muncul pop-up form alasan.
+
+Setelah submit → status user berubah jadi off.
+
+User diarahkan ke halaman khusus “Maaf, belum bisa diterima” + alasan penolakan.
+
+ Penerimaan pelamar:
+
+Saat klik Terima → muncul pop-up untuk memilih unit kerja.
+
+Setelah submit → proses konversi ke karyawan magang.
+
+🔧 Karyawan Magang – Dashboard
+
+ Menampilkan jumlah akumulasi:
+
+Absensi per akun (hadir/sakit/izin/alfa).
+
+Akumulasi karyawan magang (per admin unit kerja).
+
+Akumulasi karyawan magang keseluruhan.
+
+Akumulasi pelamar magang.
+
+ Status magang (aktif / lulus / mundur) dengan warning jika diubah.
+
+ Nilai akhir dari admin jika sudah lulus.
+
+🔧 Karyawan Magang – Sertifikat
+
+ Jika status = lulus → dapat generate & cetak sertifikat otomatis.
+
+🔧 Absensi Hybrid
+
+ Perlu implementasi penuh:
+
+Karyawan bisa scan / input absen.
+
+Admin bisa override (ubah jadi sakit/izin/alfa).
+
+🔧 Layout / UI
+
+ Tambahkan flash message global (sukses / gagal / peringatan).
+
+🔧 Admin – Pengelolaan User (baru)
+
+ CRUD user secara keseluruhan (edit nama, email, password).
+
+ Membuat akun admin unit kerja.
+
+🔧 Admin Unit Kerja – Dashboard (baru)
+
+ Melihat jumlah karyawan magang di unit kerjanya.
+
+ Memberikan nilai kepada karyawan di unit kerjanya.
