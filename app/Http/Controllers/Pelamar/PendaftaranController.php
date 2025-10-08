@@ -16,7 +16,8 @@ class PendaftaranController extends Controller
     }
         $request->validate([
             'nama'     => 'required|string|max:255',
-            'nik'      => 'required|string|max:50'.$pelamar->id,
+            'kelamin'  => 'required|in:L,P', // ✅ validasi enum
+            'nik'      => 'required|string|max:50',
             'kampus'   => 'required|string|max:255',
             'jurusan'  => 'required|string|max:255',
             'no_telp'  => 'required|string|max:20',
@@ -33,7 +34,7 @@ class PendaftaranController extends Controller
         $cvPath        = $request->file('cv')->store('cv', 'public');
         $transkripPath = $request->file('transkrip')->store('transkrip', 'public');
         $suratPath     = $request->file('surat')->store('surat', 'public');
-
+        $user = auth()->user();
 
         // Simpan data (nanti bisa dimasukkan ke database model Pelamar)
         // Contoh sementara hanya simpan ke session untuk testing
@@ -41,6 +42,7 @@ class PendaftaranController extends Controller
         Pelamar::create([
             'user_id' => auth()->id(),
             'nama'    => $request->nama,
+            'kelamin' => $request->kelamin, // ✅ disimpan di sini
             'nik'     => $request->nik,
             'kampus'  => $request->kampus,
             'jurusan' => $request->jurusan,
@@ -112,6 +114,7 @@ class PendaftaranController extends Controller
     $pelamar = Pelamar::findOrFail($id);
     $request->validate([
         'nama'      => 'required|string|max:255',
+        'kelamin'  => 'required|in:L,P',
         'nik'       => 'required|string|max:50'.$pelamar->id,
         'kampus'    => 'required|string|max:255',
         'jurusan'   => 'required|string|max:255',

@@ -9,7 +9,16 @@
 
         <div class="mb-4">
             <label class="block font-medium">Nama</label>
-            <input type="text" name="nama" class="form-input w-full" required>
+            <input type="text" name="nama" class="form-input w-full" value="{{ old('nama', auth()->user()->name) }}" required>
+        </div>
+
+        <div class="mb-4">
+            <label class="block font-medium">Jenis Kelamin</label>
+            <select name="kelamin" class="form-input w-full" required>
+                <option value="">-- Pilih Jenis Kelamin --</option>
+                <option value="L">Laki-laki</option>
+                <option value="P">Perempuan</option>
+            </select>
         </div>
 
         <div class="mb-4">
@@ -28,14 +37,27 @@
         </div>
 
         <div class="mb-4">
-            <label class="block font-medium">No Telepon</label>
-            <input type="text" name="no_telp" class="form-input w-full" required>
-        </div>
+    <label class="block font-medium">No Telepon</label>
+    <input 
+        type="text" 
+        name="no_telp" 
+        class="form-input w-full" 
+        value="{{ old('no_telp', auth()->user()->no_telp ?? '') }}" 
+        required
+    >
+</div>
 
-        <div class="mb-4">
-            <label class="block font-medium">Email</label>
-            <input type="email" name="email" class="form-input w-full" required>
-        </div>
+<div class="mb-4">
+    <label class="block font-medium">Email</label>
+    <input 
+        type="email" 
+        name="email" 
+        class="form-input w-full" 
+        value="{{ old('email', auth()->user()->email ?? '') }}" 
+        required
+    >
+</div>
+
 
         <div class="mb-4">
             <label class="block font-medium">Alamat</label>

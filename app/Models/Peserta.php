@@ -14,6 +14,7 @@ class Peserta extends Model
     'user_id',
         'id_magang',
             'nama',
+            'kelamin',
                  'nik',
                     'kampus',
                          'jurusan',

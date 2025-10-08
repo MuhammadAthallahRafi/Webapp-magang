@@ -22,6 +22,7 @@
         <thead class="bg-blue-600 text-white">
             <tr>
                 <th class="px-3 py-2">Nama</th>
+                <th class="px-3 py-2">Kelamin</th>
                 <th class="px-3 py-2">Kampus</th>
                 <th class="px-3 py-2">Jurusan</th>
                 <th class="px-3 py-2">status</th>
@@ -34,6 +35,7 @@
             @forelse ($pelamars as $pelamar)
                 <tr class="border-b hover:bg-gray-50">
                     <td>{{ $pelamar->nama ?? '-' }}</td>
+                    <td>{{ $pelamar->kelamin ?? '-' }}</td>
                     <td>{{ $pelamar->kampus ?? '-' }}</td>
                     <td>{{ $pelamar->jurusan ?? '-' }}</td>
                     <td>{{ $pelamar->status ?? '-' }}</td>

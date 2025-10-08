@@ -112,14 +112,32 @@ class PesertaController extends Controller
 
     $peserta = Peserta::findOrFail($id);
 
+    // 🔹 Update status & nilai peserta
     $peserta->update([
-        'nilai' => $request->nilai,
+        'nilai'  => $request->nilai,
         'status' => 'lulus',
+        'tanggal_selesai' => now()->toDateString(),
     ]);
 
+    // 🔹 Ambil periode aktif terakhir
+    $periodeAktif = \App\Models\PeriodeMagang::where('peserta_id', $peserta->id)
+        ->where('status', 'aktif')
+        ->orderByDesc('periode_ke')
+        ->first();
+
+    // 🔹 Kalau ada, ubah jadi selesai
+    if ($periodeAktif) {
+        $periodeAktif->update([
+            'status' => 'selesai',
+            'tanggal_selesai_lama' => $periodeAktif->tanggal_selesai,
+            'tanggal_selesai' => now()->toDateString(),
+        ]);
+    }
+
     return redirect()->route('admin.peserta-magang')
-                 ->with('success', 'Peserta berhasil diluluskan dengan nilai ' . $request->nilai);
+        ->with('success', 'Peserta berhasil diluluskan dengan nilai ' . $request->nilai);
 }
+
 
 public function mundur(Request $request, $id)
 {
@@ -129,15 +147,32 @@ public function mundur(Request $request, $id)
 
     $peserta = Peserta::findOrFail($id);
 
+    // Update status peserta
     $peserta->update([
         'status' => 'mundur',
         'alasan' => $request->alasan,
-        'tanggal_selesai' => now()
+        'tanggal_selesai' => now(),
+    ]);
+
+    // 🔹 Cari periode magang aktif peserta
+    $periodeAktif = \App\Models\PeriodeMagang::where('peserta_id', $peserta->id)
+        ->where('status', 'aktif')
+        ->latest('id')
+        ->first();
+
+    // 🔹 Kalau ada, ubah jadi dibatalkan
+    if ($periodeAktif) {
+        $periodeAktif->update([
+            'status' => 'dibatalkan',
+            'tanggal_selesai_lama' => $periodeAktif->tanggal_selesai,
+            'tanggal_selesai' => now()->toDateString(),
         ]);
+    }
 
     return redirect()->route('admin.peserta-magang')
-                    ->with('success', 'Peserta berhasil dimundurkan dengan alasan yang dicatat.');
+        ->with('success', 'Peserta berhasil dimundurkan dan periode magangnya dibatalkan.');
 }
+
 
 }
 

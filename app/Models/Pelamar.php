@@ -12,6 +12,7 @@ class Pelamar extends Model
     protected $fillable = [
         'user_id',
         'nama',
+        'kelamin',
         'nik',
         'kampus',
         'jurusan',

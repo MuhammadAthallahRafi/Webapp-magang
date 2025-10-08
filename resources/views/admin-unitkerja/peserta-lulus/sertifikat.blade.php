@@ -20,8 +20,9 @@
         <p>Jurusan: {{ $peserta->jurusan }}</p>
 
         <p>
-            Telah menyelesaikan program magang pada periode 
-            {{ $periode->tanggal_mulai }} s/d {{ $periode->tanggal_selesai }}.
+            Telah menyelesaikan program magang pada periode ke:
+            {{$periode->periode_ke}}
+            dengan Tanggal{{ $periode->tanggal_mulai }} s/d {{ $periode->tanggal_selesai }}.
         </p>
 
         <br><br><br>

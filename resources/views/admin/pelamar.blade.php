@@ -21,6 +21,7 @@
             <thead class="bg-blue-600 text-white">
                 <tr>
                     <th class="px-3 py-2">Nama</th>
+                    <th class="px-3 py-2">Kelamin</th>
                     <th class="px-3 py-2">Kampus</th>
                     <th class="px-3 py-2">Jurusan</th>
                     <th class="px-3 py-2">Status</th>
@@ -34,6 +35,7 @@
                 @forelse ($pelamars as $pelamar)
                     <tr class="border-b hover:bg-gray-50">
                         <td>{{ $pelamar->nama ?? '-' }}</td>
+                        <td>{{ $pelamar->kelamin ?? '-' }}</td>
                         <td>{{ $pelamar->kampus ?? '-' }}</td>
                         <td>{{ $pelamar->jurusan ?? '-' }}</td>
                         <td>{{ $pelamar->status ?? '-' }}</td>
@@ -41,7 +43,6 @@
                         <td>{{ $pelamar->tanggal_selesai ?? '-' }}</td>
 
                         <td class="px-3 py-2 text-center">
-                            {{-- Cek apakah pelamar ini punya permohonan magang kembali --}}
                             @php
                                 $permohonan = $pelamar->permohonanPeriode
                                     ->where('jenis_permohonan', 'permohonanmagangkembali')
@@ -51,14 +52,18 @@
 
                             @if($permohonan)
                                 {{-- Tombol Approve & Reject --}}
-                                <form action="{{ route('admin.periode.approve', $permohonan->id) }}" method="POST" class="inline-block">
+                                <form action="{{ route('admin.periode.approve', $permohonan->id) }}" method="POST" class="inline-block form-approve">
                                     @csrf
-                                    <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded text-xs font-medium">Approve</button>
+                                    <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded text-xs font-medium">
+                                        Approve
+                                    </button>
                                 </form>
 
-                                <form action="{{ route('admin.periode.reject', $permohonan->id) }}" method="POST" class="inline-block ml-1">
+                                <form action="{{ route('admin.periode.reject', $permohonan->id) }}" method="POST" class="inline-block ml-1 form-reject">
                                     @csrf
-                                    <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded text-xs font-medium">Reject</button>
+                                    <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded text-xs font-medium">
+                                        Reject
+                                    </button>
                                 </form>
                             @else
                                 {{-- Tombol lihat pelamar biasa --}}
@@ -71,11 +76,50 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-3 py-3 text-center text-gray-500">Tidak ada data pelamar.</td>
+                        <td colspan="8" class="px-3 py-3 text-center text-gray-500">Tidak ada data pelamar.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.querySelectorAll('.form-approve').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Setujui Permohonan?',
+                text: "Data akan disetujui dan tidak bisa dibatalkan!",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#16a34a',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Setujui'
+            }).then((result) => {
+                if (result.isConfirmed) form.submit();
+            });
+        });
+    });
+
+    document.querySelectorAll('.form-reject').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Tolak Permohonan?',
+                text: "Data akan ditandai sebagai ditolak!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Ya, Tolak'
+            }).then((result) => {
+                if (result.isConfirmed) form.submit();
+            });
+        });
+    });
+</script>
 @endsection

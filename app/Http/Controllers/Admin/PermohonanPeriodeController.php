@@ -108,25 +108,33 @@ class PermohonanPeriodeController extends Controller
     }
 
     // ===== 3. MUNDUR =====
-    if ($permohonan->jenis_permohonan === 'mundur') {
-        $periodeLama = PeriodeMagang::find($permohonan->periode_id);
+   if ($permohonan->jenis_permohonan === 'mundur') {
+    // 🔹 Cari periode terakhir (aktif) dari peserta
+    $periodeAktif = \App\Models\PeriodeMagang::where('peserta_id', $peserta->id ?? null)
+        ->where('status', 'aktif')
+        ->orderByDesc('periode_ke')
+        ->first();
 
-        if ($periodeLama) {
-            $periodeLama->update([
-                'tanggal_selesai_lama' => $periodeLama->tanggal_selesai,
-                'tanggal_selesai'      => now()->toDateString(),
-            ]);
-        }
-
-        if ($peserta) {
-            $peserta->update([
-                'tanggal_selesai_lama' => $peserta->tanggal_selesai,
-                'tanggal_selesai'      => now()->toDateString(),
-                'status'               => 'mundur',
-                'alasan'               => $permohonan->alasan,
-            ]);
-        }
+    // 🔹 Kalau ada, ubah jadi dibatalkan
+    if ($periodeAktif) {
+        $periodeAktif->update([
+            'tanggal_selesai_lama' => $periodeAktif->tanggal_selesai,
+            'tanggal_selesai'      => now()->toDateString(),
+            'status'               => 'dibatalkan',
+        ]);
     }
+
+    // 🔹 Update data peserta
+    if ($peserta) {
+        $peserta->update([
+            'tanggal_selesai_lama' => $peserta->tanggal_selesai,
+            'tanggal_selesai'      => now()->toDateString(),
+            'status'               => 'mundur',
+            'alasan'               => $permohonan->alasan,
+        ]);
+    }
+}
+
 
     // ===== 4. MAGANG KEMBALI =====
     if ($permohonan->jenis_permohonan === 'permohonanmagangkembali') {

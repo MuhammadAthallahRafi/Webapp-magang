@@ -12,6 +12,14 @@
             <label class="block font-medium">Nama</label>
             <input type="text" name="nama" value="{{ old('nama', $pelamar->nama) }}" class="form-input w-full" required>
         </div>
+        <div class="mb-4">
+            <label class="block font-medium">Jenis Kelamin</label>
+            <select name="kelamin" class="form-input w-full" required>
+                <option value="">-- Pilih Jenis Kelamin --</option>
+                <option value="L" {{ old('kelamin', $pelamar->kelamin ?? '') == 'L' ? 'selected' : '' }}>Laki-laki</option>
+                <option value="P" {{ old('kelamin', $pelamar->kelamin ?? '') == 'P' ? 'selected' : '' }}>Perempuan</option>
+            </select>
+        </div>
 
         <div class="mb-4">
             <label class="block font-medium">NIK</label>

@@ -98,6 +98,7 @@ class PelamarDitolakController extends Controller
         'user_id'           => $user->id,
         'id_magang'         => $idMagang,
         'nama'              => $pelamar->nama,
+        'kelamin'           => $pelamar->kelamin,
         'nik'               => $pelamar->nik,
         'kampus'            => $pelamar->kampus,
         'jurusan'           => $pelamar->jurusan,
