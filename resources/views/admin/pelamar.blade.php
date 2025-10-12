@@ -22,7 +22,8 @@
                 <tr>
                     <th class="px-3 py-2">Nama</th>
                     <th class="px-3 py-2">Kelamin</th>
-                    <th class="px-3 py-2">Kampus</th>
+                    <th class="px-3 py-2">Jenis Permohonan</th>
+                    <th class="px-3 py-2">Instansi Pendidikan</th>
                     <th class="px-3 py-2">Jurusan</th>
                     <th class="px-3 py-2">Status</th>
                     <th class="px-3 py-2">Tanggal Mulai</th>
@@ -32,54 +33,68 @@
             </thead>
 
             <tbody>
-                @forelse ($pelamars as $pelamar)
-                    <tr class="border-b hover:bg-gray-50">
-                        <td>{{ $pelamar->nama ?? '-' }}</td>
-                        <td>{{ $pelamar->kelamin ?? '-' }}</td>
-                        <td>{{ $pelamar->kampus ?? '-' }}</td>
-                        <td>{{ $pelamar->jurusan ?? '-' }}</td>
-                        <td>{{ $pelamar->status ?? '-' }}</td>
-                        <td>{{ $pelamar->tanggal_mulai ?? '-' }}</td>
-                        <td>{{ $pelamar->tanggal_selesai ?? '-' }}</td>
+    @forelse ($pelamars as $pelamar)
+        @php
+            $permohonans = $pelamar->permohonanPeriode
+                ->whereIn('jenis_permohonan', ['permohonanmagangkembali', 'tambah', 'percepat','mundur'])
+                ->where('status', 'pending')
+                ->sortByDesc('created_at');
+        @endphp
 
-                        <td class="px-3 py-2 text-center">
-                            @php
-                                $permohonan = $pelamar->permohonanPeriode
-                                    ->where('jenis_permohonan', 'permohonanmagangkembali')
-                                    ->where('status', 'pending')
-                                    ->first();
-                            @endphp
+        @if($permohonans->count() > 0)
+            @foreach($permohonans as $permohonan)
+                <tr class="border-b hover:bg-gray-50">
+                    <td>{{ $pelamar->nama ?? '-' }}</td>
+                    <td>{{ $pelamar->kelamin ?? '-' }}</td>
+                    <td>{{ $permohonan->jenis_permohonan ?? '-' }}</td>
+                    <td>{{ $pelamar->kampus ?? '-' }}</td>
+                    <td>{{ $pelamar->jurusan ?? '-' }}</td>
+                    <td>{{ $pelamar->status ?? '-' }}</td>
+                    <td>{{ $pelamar->tanggal_mulai ?? '-' }}</td>
+                    <td>{{ $pelamar->tanggal_selesai ?? '-' }}</td>
+                    <td class="px-3 py-2 text-center">
+                        {{-- Tombol Approve & Reject --}}
+                        <form action="{{ route('admin.periode.approve', $permohonan->id) }}" method="POST" class="inline-block form-approve">
+                            @csrf
+                            <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded text-xs font-medium">
+                                Approve
+                            </button>
+                        </form>
 
-                            @if($permohonan)
-                                {{-- Tombol Approve & Reject --}}
-                                <form action="{{ route('admin.periode.approve', $permohonan->id) }}" method="POST" class="inline-block form-approve">
-                                    @csrf
-                                    <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded text-xs font-medium">
-                                        Approve
-                                    </button>
-                                </form>
-
-                                <form action="{{ route('admin.periode.reject', $permohonan->id) }}" method="POST" class="inline-block ml-1 form-reject">
-                                    @csrf
-                                    <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded text-xs font-medium">
-                                        Reject
-                                    </button>
-                                </form>
-                            @else
-                                {{-- Tombol lihat pelamar biasa --}}
-                                <a href="{{ route('admin.pelamar.lihat', $pelamar->id) }}" 
-                                   class="bg-blue-100 text-blue-800 px-3 py-1 rounded border border-blue-500 hover:bg-blue-200 text-xs font-medium">
-                                    👁️ Lihat
-                                </a>
-                            @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="8" class="px-3 py-3 text-center text-gray-500">Tidak ada data pelamar.</td>
-                    </tr>
-                @endforelse
-            </tbody>
+                        <form action="{{ route('admin.periode.reject', $permohonan->id) }}" method="POST" class="inline-block ml-1 form-reject">
+                            @csrf
+                            <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded text-xs font-medium">
+                                Reject
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            @endforeach
+        @else
+            {{-- Jika tidak ada permohonan pending, tampilkan tombol lihat --}}
+            <tr class="border-b hover:bg-gray-50">
+                <td>{{ $pelamar->nama ?? '-' }}</td>
+                <td>{{ $pelamar->kelamin ?? '-' }}</td>
+                <td>-</td>
+                <td>{{ $pelamar->kampus ?? '-' }}</td>
+                <td>{{ $pelamar->jurusan ?? '-' }}</td>
+                <td>{{ $pelamar->status ?? '-' }}</td>
+                <td>{{ $pelamar->tanggal_mulai ?? '-' }}</td>
+                <td>{{ $pelamar->tanggal_selesai ?? '-' }}</td>
+                <td class="px-3 py-2 text-center">
+                    <a href="{{ route('admin.pelamar.lihat', $pelamar->id) }}" 
+                    class="bg-blue-100 text-blue-800 px-3 py-1 rounded border border-blue-500 hover:bg-blue-200 text-xs font-medium">
+                        👁️ Lihat
+                    </a>
+                </td>
+            </tr>
+        @endif
+    @empty
+        <tr>
+            <td colspan="9" class="px-3 py-3 text-center text-gray-500">Tidak ada data pelamar.</td>
+        </tr>
+    @endforelse
+</tbody>
         </table>
     </div>
 </div>

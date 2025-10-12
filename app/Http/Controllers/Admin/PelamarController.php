@@ -32,11 +32,15 @@ class PelamarController extends Controller
         ->get();
 
     // --- 2️⃣ Ambil peserta dengan permohonan magang kembali
-    $pelamarKembali = Peserta::whereHas('permohonanPeriode', function ($q) {
-            $q->where('jenis_permohonan', 'permohonanmagangkembali')
-              ->where('status', 'pending');
+        $pelamarKembali = Peserta::whereHas('permohonanPeriode', function ($q) {
+            $q->whereIn('jenis_permohonan', ['permohonanmagangkembali', 'tambah', 'percepat','mundur'])
+            ->where('status', 'pending');
         })
-        ->with(['user', 'permohonanPeriode'])
+        ->with(['user', 'permohonanPeriode' => function($query) {
+            $query->whereIn('jenis_permohonan', ['permohonanmagangkembali', 'tambah', 'percepat','mundur'])
+                ->where('status', 'pending')
+                ->orderBy('created_at', 'desc');
+        }])
         ->get();
 
     // --- 3️⃣ Gabungkan keduanya jadi satu koleksi unik

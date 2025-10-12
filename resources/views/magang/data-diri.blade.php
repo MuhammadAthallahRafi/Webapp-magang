@@ -15,7 +15,7 @@
             <div><strong>ID Magang:</strong><p>{{ $peserta->id_magang ?? '-' }}</p></div>
             <div><strong>Divisi:</strong><p>{{ $peserta->divisi ?? '-' }}</p></div>
             <div><strong>NIK:</strong> <p>{{ $peserta->nik }}</p></div>
-            <div><strong>Kampus:</strong> <p>{{ $peserta->kampus }}</p></div>
+            <div><strong>>Instansi Pendidikan (Kampus atau SMK,SMA):</strong> <p>{{ $peserta->kampus }}</p></div>
             <div><strong>Jurusan:</strong> <p>{{ $peserta->jurusan }}</p></div>
             <div><strong>Tanggal Mulai:</strong> <p>{{ $peserta->tanggal_mulai }}</p></div>
             <div><strong>Tanggal Selesai:</strong> <p>{{ $peserta->tanggal_selesai }}</p></div>         

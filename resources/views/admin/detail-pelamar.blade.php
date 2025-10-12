@@ -21,7 +21,7 @@
                 <p>{{ $pelamar->nik }}</p>
             </div>
             <div>
-                <strong>Kampus:</strong>
+                <strong>>Instansi Pendidikan (Kampus atau SMK,SMA):</strong>
                 <p>{{ $pelamar->kampus }}</p>
             </div>
             <div>

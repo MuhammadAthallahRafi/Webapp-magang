@@ -23,7 +23,7 @@
             <tr>
                 <th class="px-3 py-2">Nama</th>
                 <th class="px-3 py-2">Kelamin</th>
-                <th class="px-3 py-2">Kampus</th>
+                <th class="px-3 py-2">>Instansi Pendidikan</th>
                 <th class="px-3 py-2">Jurusan</th>
                 <th class="px-3 py-2">status</th>
                 <th class="px-3 py-2">tanggal mulai</th>

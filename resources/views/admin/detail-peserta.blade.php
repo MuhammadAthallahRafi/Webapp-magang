@@ -30,7 +30,7 @@
                 <p>{{ $peserta->nik }}</p>
             </div>
             <div>
-                <strong>Kampus:</strong>
+                <strong>>Instansi Pendidikan (Kampus atau SMK,SMA)</strong>
                 <p>{{ $peserta->kampus }}</p>
             </div>
             <div>

@@ -27,7 +27,7 @@
         </div>
 
         <div class="mb-4">
-            <label class="block font-medium">Kampus</label>
+            <label class="block font-medium">Instansi Pendidikan (Kampus atau SMK,SMA)</label>
             <input type="text" name="kampus" class="form-input w-full" required>
         </div>
 
