@@ -1,14 +1,14 @@
 <?php
 
-
 namespace App\Http\Controllers\Admin;
-
+use App\Http\Controllers\FilterController;
 use App\Http\Controllers\Controller;
 use App\Models\Peserta;
 use App\Models\User;
 use App\Models\Pelamar;
 use App\Models\PeriodeMagang;
 use App\Models\PermohonanPeriode;
+use App\Models\Penilaian;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
@@ -18,45 +18,48 @@ class PesertaController extends Controller
     {
         $query = Peserta::with('user');
 
+         // Apply filters menggunakan FilterController
+        $query = FilterController::applyStatusFilter($query, $request->status);
+        $query = FilterController::applyDivisiFilter($query, $request->divisi);
+        $query = FilterController::applyKelaminFilter($query, $request->kelamin);
+        $query = FilterController::applyTahunMulaiFilter($query, $request->tahun_mulai);
+        $query = FilterController::applyTahunSelesaiFilter($query, $request->tahun_selesai);
+        $query = FilterController::applyNilaiFilter($query, $request->nilai_min, $request->nilai_max);
+
         if ($request->has('search')) {
             $searchTerm = $request->input('search');
              $query->where(function ($q) use ($searchTerm) {
             $q->where('nama', 'like', '%' . $searchTerm . '%') // cari di tabel pelamars
-              ->orWhereHas('user', function ($q2) use ($searchTerm) {
+                ->orWhere('nik', 'like', "%{$term}%") // 🔍 TAMBAH INI
+                ->orWhere('email', 'like', "%{$term}%")
+                ->orWhere('no_telp', 'like', "%{$term}%")
+                ->orWhere('kampus', 'like', "%{$term}%")
+                ->orWhereHas('user', function ($q2) use ($searchTerm) {
                   $q2->where('name', 'like', '%' . $searchTerm . '%'); // cari di relasi users
                   });
             });
         }
 
+         // === Urutkan agar 'lulus' & 'mundur' paling bawah ===
+            $query->orderByRaw("
+                CASE 
+                    WHEN status = 'aktif' THEN 1
+                    WHEN status = 'lulus' THEN 2
+                    WHEN status = 'mundur' THEN 3
+                    ELSE 5
+                END
+            ");
+
         $pesertas = $query->get();
-        return view('admin.Peserta-magang', compact('pesertas'));
+
+        // Get filter options for view
+        $filterOptions = [
+            'divisiOptions' => FilterController::getDivisiOptions(),
+            'tahunOptions' => FilterController::getTahunOptions(),
+        ];
+        return view('admin.Peserta-magang', compact('pesertas','filterOptions'));
 
     }
-    public function updateDivisi(Request $request, $id)
-    {
-            $peserta = \App\Models\Peserta::findOrFail($id);
-            $peserta->divisi = $request->input('divisi');
-            $peserta->save();
-
-        return redirect()->back()->with('success', 'Divisi diperbarui.');
-    }
-    public function updateNilai(Request $request, $id)
-    {
-        $peserta = \App\Models\Peserta::findOrFail($id);
-        $peserta->nilai = $request->input('nilai'); // huruf kecil semua
-        $peserta->save();
-
-        return redirect()->back()->with('success', 'Nilai diperbarui.');
-    }
-    public function updateStatus(Request $request, $id)
-    {
-        $peserta = \App\Models\Peserta::findOrFail($id);
-        $peserta->status = $request->input('status'); // huruf kecil semua
-        $peserta->save();
-
-        return redirect()->back()->with('success', 'status diperbarui.');
-    }
-
 
     public function show($id)
     {
@@ -80,101 +83,174 @@ class PesertaController extends Controller
 
 
 
-    public function periode($id)
-    {
-        // Ambil data peserta dan semua periode magangnya
-        $peserta = Peserta::with(['user'])->findOrFail($id);
+        public function periode($id)
+        {
+            // Ambil data peserta dan semua periode magangnya
+            $peserta = Peserta::with(['user'])->findOrFail($id);
 
-        // Ambil semua riwayat periode magang
-        $riwayatPeriode = PeriodeMagang::where('peserta_id', $id)
-            ->orderBy('periode_ke', 'asc')
-            ->get();
+            // Ambil semua riwayat periode magang
+            $riwayatPeriode = PeriodeMagang::where('peserta_id', $id)
+                ->with('penilaian') // ⬅️ GUNAKAN penilaian
+                ->orderBy('periode_ke', 'asc')
+                ->get();
 
-        // Ambil semua permohonan periode terkait
-        $permohonan = PermohonanPeriode::where('peserta_id', $id)
-            ->orderBy('created_at', 'desc')
-            ->get();
+            // Ambil semua permohonan periode terkait
+            $permohonan = PermohonanPeriode::where('peserta_id', $id)
+                ->orderBy('created_at', 'desc')
+                ->get();
 
-        return view('admin.periode', [
-            'active' => 'peserta',
-            'peserta' => $peserta,
-            'riwayatPeriode' => $riwayatPeriode,
-            'permohonan' => $permohonan
-        ]);
-    }
+            $riwayatSikap = null;
+                if ($peserta) {
+                    $riwayatSikap = Penilaian::with('periode')
+                        ->whereHas('periode', function($query) use ($peserta) {
+                            $query->where('peserta_id', $peserta->id);
+                        })
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                }
+
+            return view('admin.periode', [
+                'active' => 'peserta',
+                'peserta' => $peserta,
+                'riwayatPeriode' => $riwayatPeriode,
+                'permohonan' => $permohonan,
+                'riwayatSikap'  => $riwayatSikap// ✅ TAMBAHKAN INI
+            ]);
+        }
 
 
     public function lulus(Request $request, $id)
-{
-    $request->validate([
-        'nilai' => 'required|integer|min:0|max:100',
-    ]);
+    {
+        $request->validate([
+            'disiplin_tepat_waktu' => 'required|numeric|min:0|max:100',
+            'disiplin_kehadiran' => 'required|numeric|min:0|max:100',
+            'disiplin_tata_tertib' => 'required|numeric|min:0|max:100',
+            'kerja_keterampilan' => 'required|numeric|min:0|max:100',
+            'kerja_kualitas' => 'required|numeric|min:0|max:100',
+            'kerja_tanggung_jawab' => 'required|numeric|min:0|max:100',
+            'sosial_komunikasi' => 'required|numeric|min:0|max:100',
+            'sosial_kerjasama' => 'required|numeric|min:0|max:100',
+            'sosial_inisiatif' => 'required|numeric|min:0|max:100',
+            'lain_etika' => 'required|numeric|min:0|max:100',
+            'lain_penampilan' => 'required|numeric|min:0|max:100',
+        ]);
 
-    $peserta = Peserta::findOrFail($id);
+        $peserta = Peserta::findOrFail($id);
 
-    // 🔹 Update status & nilai peserta
-    $peserta->update([
-        'nilai'  => $request->nilai,
-        'status' => 'lulus',
-        'tanggal_selesai' => now()->toDateString(),
-    ]);
+        // ✅ Cari periode aktif peserta
+        $periodeAktif = \App\Models\PeriodeMagang::where('peserta_id', $peserta->id)
+            ->where('status', 'aktif')
+            ->orderByDesc('periode_ke')
+            ->firstOrFail();
 
-    // 🔹 Ambil periode aktif terakhir
-    $periodeAktif = \App\Models\PeriodeMagang::where('peserta_id', $peserta->id)
-        ->where('status', 'aktif')
-        ->orderByDesc('periode_ke')
-        ->first();
+        // ✅ Hitung total & rata-rata nilai
+        $jumlahNilai = collect($request->only([
+            'disiplin_tepat_waktu',
+            'disiplin_kehadiran',
+            'disiplin_tata_tertib',
+            'kerja_keterampilan',
+            'kerja_kualitas',
+            'kerja_tanggung_jawab',
+            'sosial_komunikasi',
+            'sosial_kerjasama',
+            'sosial_inisiatif',
+            'lain_etika',
+            'lain_penampilan'
+        ]))->sum();
 
-    // 🔹 Kalau ada, ubah jadi selesai
-    if ($periodeAktif) {
+        $nilaiRataRata = $jumlahNilai / 11;
+
+        // ✅ Simpan ke penilaian
+        Penilaian::create([
+            'periode_magang_id' => $periodeAktif->id,
+            'disiplin_tepat_waktu' => $request->disiplin_tepat_waktu,
+            'disiplin_kehadiran' => $request->disiplin_kehadiran,
+            'disiplin_tata_tertib' => $request->disiplin_tata_tertib,
+            'kerja_keterampilan' => $request->kerja_keterampilan,
+            'kerja_kualitas' => $request->kerja_kualitas,
+            'kerja_tanggung_jawab' => $request->kerja_tanggung_jawab,
+            'sosial_komunikasi' => $request->sosial_komunikasi,
+            'sosial_kerjasama' => $request->sosial_kerjasama,
+            'sosial_inisiatif' => $request->sosial_inisiatif,
+            'lain_etika' => $request->lain_etika,
+            'lain_penampilan' => $request->lain_penampilan,
+            'jumlah_nilai' => $jumlahNilai,
+            'nilai_rata_rata' => $nilaiRataRata
+        ]);
+
+        // ✅ TOLAK SEMUA PERMOHONAN PENDING PESERTA INI
+        PermohonanPeriode::where('peserta_id', $peserta->id)
+        ->where('status', 'pending')
+        ->update([
+            'status' => 'ditolak',
+            'tanggal_disetujui' => null,
+        ]);
+
+        // ✅ Peserta tidak memiliki periode aktif lagi
+        $peserta->update([
+            'periode_aktif_id' => null,
+        ]);
+
+    // ✅ Update status peserta menjadi lulus
+        $peserta->update([
+            'nilai'  => round($nilaiRataRata),
+            'status' => 'lulus',
+        ]);
+
+        // ✅ Periode aktif menjadi selesai
         $periodeAktif->update([
             'status' => 'selesai',
-            'tanggal_selesai_lama' => $periodeAktif->tanggal_selesai,
-            'tanggal_selesai' => now()->toDateString(),
+            'tanggal_selesai_lama' => $periodeAktif->tanggal_selesai_lama ?? $periodeAktif->tanggal_selesai,
         ]);
+
+    
+
+
+        return redirect()->route('admin.peserta-magang')
+            ->with('success', 'Peserta berhasil diluluskan dengan nilai akhir ' . round($nilaiRataRata));
     }
 
-    return redirect()->route('admin.peserta-magang')
-        ->with('success', 'Peserta berhasil diluluskan dengan nilai ' . $request->nilai);
-}
 
 
-public function mundur(Request $request, $id)
-{
-    $request->validate([
-        'alasan' => 'required|string|max:255',
-    ]);
-
-    $peserta = Peserta::findOrFail($id);
-
-    // Update status peserta
-    $peserta->update([
-        'status' => 'mundur',
-        'alasan' => $request->alasan,
-        'tanggal_selesai' => now(),
-    ]);
-
-    // 🔹 Cari periode magang aktif peserta
-    $periodeAktif = \App\Models\PeriodeMagang::where('peserta_id', $peserta->id)
-        ->where('status', 'aktif')
-        ->latest('id')
-        ->first();
-
-    // 🔹 Kalau ada, ubah jadi dibatalkan
-    if ($periodeAktif) {
-        $periodeAktif->update([
-            'status' => 'dibatalkan',
-            'tanggal_selesai_lama' => $periodeAktif->tanggal_selesai,
-            'tanggal_selesai' => now()->toDateString(),
+    public function mundur(Request $request, $id)
+    {
+        $request->validate([
+            'alasan' => 'required|string|max:255',
         ]);
+        
+        // ✅ TOLAK SEMUA PERMOHONAN PENDING PESERTA INI
+        PermohonanPeriode::where('peserta_id', $peserta->id)
+            ->where('status', 'pending')
+            ->update([
+                'status' => 'ditolak',
+                'tanggal_disetujui' => null,
+            ]);
+
+        $peserta = Peserta::findOrFail($id);
+
+        // Update status peserta
+        $peserta->update([
+            'status' => 'mundur',
+            'alasan' => $request->alasan,
+            'periode_aktif_id'     => null,
+        ]);
+
+        // 🔹 Cari periode magang aktif peserta
+        $periodeAktif = \App\Models\PeriodeMagang::where('peserta_id', $peserta->id)
+            ->where('status', 'aktif')
+            ->latest('id')
+            ->first();
+
+        // 🔹 Kalau ada, ubah jadi dibatalkan
+        if ($periodeAktif) {
+            $periodeAktif->update([
+                'status' => 'dibatalkan',
+                'tanggal_selesai_lama' => $periodeAktif->tanggal_selesai,
+            ]);
+        }
+
+        return redirect()->route('admin.peserta-magang')
+            ->with('success', 'Peserta berhasil dimundurkan dan periode magangnya dibatalkan.');
     }
 
-    return redirect()->route('admin.peserta-magang')
-        ->with('success', 'Peserta berhasil dimundurkan dan periode magangnya dibatalkan.');
 }
-
-
-}
-
-
-

@@ -4,45 +4,77 @@ namespace App\Http\Controllers\Peserta;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\PesertaMagang;
+use App\Models\Peserta;
 use App\Models\Absensi;
 use App\Models\PeriodeMagang;
 use App\Models\PermohonanPeriode;
-use App\Models\Peserta;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class PesertaMagangController extends Controller
 {
+    /**
+     * Menampilkan dashboard peserta magang
+     * 
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
     public function dashboard()
     {
-        if (!Auth::user()->pesertaMagang) {
-    return redirect()->route('login')->with('error', 'Data magang tidak ditemukan.');
+        // Cek apakah user memiliki data peserta
+        if (!Auth::user()->peserta) {
+            return redirect()->route('login')->with('error', 'Data magang tidak ditemukan.');
+        }
+
+        $peserta = Auth::user()->peserta;
+        $pesertaId = $peserta->id;
+
+        // Inisialisasi semua variabel
+        $absensiHariIni = null;
+        $kalender = [];
+        $permohonan = null;
+
+        // Jika status aktif, siapkan data absensi
+        if ($peserta->status == 'aktif') {
+            // Cek absensi hari ini
+            $today = Carbon::today();
+            $absensiHariIni = Absensi::where('peserta_id', $pesertaId)
+                ->whereDate('tanggal', $today)
+                ->first();
+
+            // Data kalender bulan ini
+            $kalender = $this->getKalender($pesertaId);
+        }
+        // Jika status mundur atau lulus, siapkan data permohonan MAGANG KEMBALI
+        elseif (in_array($peserta->status, ['mundur', 'lulus'])) {
+            $permohonan = PermohonanPeriode::where('peserta_id', $pesertaId)
+                ->where('jenis_permohonan', 'permohonanmagangkembali')
+                ->whereIn('status', ['pending', 'ditolak'])
+                ->latest()
+                ->first();
+        }
+
+        return view('magang.dashboard', compact(
+            'absensiHariIni', 
+            'kalender', 
+            'peserta', 
+            'permohonan'
+        ));
     }
 
-    $pesertaId = Auth::user()->pesertaMagang->id;
-
-            $pesertaId = Auth::user()->pesertaMagang->id;
-
-        // Cek absensi hari ini
-        $today = Carbon::today();
-        $absensiHariIni = Absensi::where('peserta_id', $pesertaId)
-            ->whereDate('tanggal', $today)
-            ->first();
-
-        // Data kalender bulan ini
-        $kalender = $this->getKalender($pesertaId);
-
-        return view('magang.dashboard', compact('absensiHariIni', 'kalender'));
-    }
-
+    /**
+     * Menyimpan data absensi masuk peserta
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function absensi(Request $request)
     {
+        // Validasi input keterangan absensi
         $request->validate([
             'keterangan' => 'required|in:Hadir,Sakit,Izin,Alfa'
         ]);
 
-        $pesertaId = Auth::user()->pesertaMagang->id;
+        $pesertaId = Auth::user()->peserta->id;
         $today = Carbon::today();
 
         // Cegah absen lebih dari sekali per hari
@@ -50,6 +82,7 @@ class PesertaMagangController extends Controller
             return back()->with('error', 'Kamu sudah melakukan absensi hari ini.');
         }
 
+        // Simpan data absensi
         Absensi::create([
             'peserta_id' => $pesertaId,
             'tanggal' => $today,
@@ -60,23 +93,32 @@ class PesertaMagangController extends Controller
         return back()->with('success', 'Absensi berhasil disimpan.');
     }
 
+    /**
+     * Menyimpan data absensi pulang peserta
+     * 
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function pulang()
     {
-        $pesertaId = Auth::user()->PersetaMagang->id;
+        $pesertaId = Auth::user()->peserta->id;
         $today = Carbon::today();
 
+        // Cari data absensi hari ini
         $absensi = Absensi::where('peserta_id', $pesertaId)
             ->whereDate('tanggal', $today)
             ->first();
 
+        // Validasi: harus sudah absensi masuk dulu
         if (!$absensi) {
             return back()->with('error', 'Belum melakukan absensi masuk.');
         }
 
+        // Validasi: cegah absensi pulang dua kali
         if ($absensi->jam_keluar) {
             return back()->with('error', 'Sudah melakukan absensi pulang.');
         }
 
+        // Update jam pulang
         $absensi->update([
             'jam_keluar' => Carbon::now()->format('H:i:s')
         ]);
@@ -84,20 +126,31 @@ class PesertaMagangController extends Controller
         return back()->with('success', 'Absensi pulang berhasil.');
     }
 
+    /**
+     * Mengambil data kalender absensi untuk bulan berjalan
+     * 
+     * @param int $pesertaId
+     * @return array
+     */
     private function getKalender($pesertaId)
     {
         $today = Carbon::today();
         $startOfMonth = $today->copy()->startOfMonth();
         $endOfMonth = $today->copy()->endOfMonth();
 
+        // Ambil data absensi bulan ini
         $absensiBulan = Absensi::where('peserta_id', $pesertaId)
             ->whereBetween('tanggal', [$startOfMonth, $endOfMonth])
             ->get()
             ->keyBy('tanggal');
 
         $kalender = [];
+        
+        // Loop melalui setiap hari dalam bulan
         for ($date = $startOfMonth->copy(); $date <= $endOfMonth; $date->addDay()) {
             $status = null;
+            
+            // Tentukan status berdasarkan data absensi
             if (isset($absensiBulan[$date->toDateString()])) {
                 $status = $absensiBulan[$date->toDateString()]->keterangan;
             } elseif ($date->isWeekend()) {
@@ -108,6 +161,7 @@ class PesertaMagangController extends Controller
                 $status = 'Mendatang';
             }
 
+            // Tambahkan data ke kalender
             $kalender[] = [
                 'tanggal' => $date->format('Y-m-d'),
                 'status' => $status,
@@ -119,10 +173,16 @@ class PesertaMagangController extends Controller
         return $kalender;
     }
 
+    /**
+     * Menampilkan riwayat absensi peserta
+     * 
+     * @return \Illuminate\View\View
+     */
     public function riwayat()
     {
-        $pesertaId = Auth::user()->pesertaMagang->id;
+        $pesertaId = Auth::user()->peserta->id;
 
+        // Ambil semua riwayat absensi (terbaru di atas)
         $riwayat = Absensi::where('peserta_id', $pesertaId)
             ->orderBy('tanggal', 'desc')
             ->get();
@@ -130,62 +190,95 @@ class PesertaMagangController extends Controller
         return view('magang.riwayat', compact('riwayat'));
     }
 
-   public function dataDiri()
-{
-    $user = Auth::user();
-    $peserta = $user->pesertaMagang; 
+    /**
+     * Menampilkan halaman data diri peserta
+     * 
+     * @return \Illuminate\View\View
+     */
+    public function dataDiri()
+    {
+        $user = Auth::user();
+        $peserta = $user->peserta;
 
-    $periodeAktif = null;
-    if ($peserta && $peserta->periodeAktif) {
-        $periodeAktif = $peserta->periodeAktif; // relasi belongsTo
+        $periodeAktif = null;
+        // Ambil periode aktif jika ada
+        if ($peserta && $peserta->periodeAktif) {
+            $periodeAktif = $peserta->periodeAktif;
+        }
+
+        // Ambil riwayat permohonan periode
+        $permohonans = $peserta 
+            ? PermohonanPeriode::where('peserta_id', $peserta->id)->latest()->get()
+            : collect();
+
+        return view('magang.data-diri', compact('peserta', 'periodeAktif', 'permohonans'));
     }
 
+    /**
+     * Memperbarui data diri peserta
+     * 
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function updateDataDiri(Request $request, $id)
+    {
+        // Validasi input data diri
+        $request->validate([
+            'nama' => 'required|string|max:255',
+            'nik' => 'required|string|max:20',
+            'kampus' => 'required|string|max:255',
+            'jurusan' => 'required|string|max:255',
+            'no_telp' => 'required|string|max:15',
+            'alamat' => 'required|string',
+            'tanggal_mulai' => 'required|date',
+            'tanggal_selesai' => 'required|date|after:tanggal_mulai',
+        ]);
 
-    $permohonans = $peserta 
-        ? PermohonanPeriode::where('peserta_id', $peserta->id)->latest()->get()
-        : collect();
+        $user = Auth::user();
+        $peserta = $user->peserta;
 
-    return view('magang.data-diri', compact('peserta', 'periodeAktif', 'permohonans'));
-}
+        // Pastikan hanya pemilik yang bisa edit
+        if (!$peserta || $peserta->id != $id) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk mengedit data ini.');
+        }
 
-public function show($id)
-{
-    $peserta = PesertaMagang::with('user')->findOrFail($id);
+        // Update data peserta
+        $peserta->update($request->all());
 
-    // Pastikan hanya status 'mundur' atau 'lulus' yang diizinkan
-    if (!in_array($peserta->status, ['mundur', 'lulus'])) {
-        return redirect('/dashboard/magang')->with('error', 'Peserta ini tidak memiliki status mundur atau lulus.');
+        return redirect()->route('magang.data-diri')
+            ->with('success', 'Data diri berhasil diperbarui.');
     }
 
-    // Tentukan view berdasarkan status
-    $view = $peserta->status === 'mundur' 
-        ? 'magang.mundur' 
-        : 'magang.lulus';
+    /**
+     * Menambah data pendidikan peserta
+     * 
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function tambahPendidikan(Request $request, $id)
+    {
+        $request->validate([
+            'pendidikan_baru' => 'required|string|max:255',
+        ]);
 
-    return view($view, compact('peserta'));
-}
+        $peserta = Peserta::findOrFail($id);
+        $pendidikanBaru = trim($request->pendidikan_baru);
 
-public function tambahPendidikan(Request $request, $id)
-{
-    $request->validate([
-        'pendidikan_baru' => 'required|string|max:255',
-    ]);
+        // Pisahkan data kampus yang sudah ada
+        $list = array_map('trim', explode(',', $peserta->kampus ?? ''));
+        
+        // Tambahkan pendidikan baru jika belum ada (hindari duplikat)
+        if (!in_array($pendidikanBaru, $list)) {
+            $list[] = $pendidikanBaru;
+        }
 
-    $peserta = Peserta::findOrFail($id);
-    $pendidikanBaru = trim($request->pendidikan_baru);
+        // Update data kampus
+        $peserta->update([
+            'kampus' => implode(', ', $list),
+        ]);
 
-    // gabungkan tanpa duplikat
-    $list = array_map('trim', explode(',', $peserta->kampus ?? ''));
-    if (!in_array($pendidikanBaru, $list)) {
-        $list[] = $pendidikanBaru;
+        return redirect()->route('magang.data-diri')->with('success', 'Pendidikan baru berhasil ditambahkan.');
     }
-
-    $peserta->update([
-        'kampus' => implode(', ', $list),
-    ]);
-
-    return redirect()->route('magang.data-diri')->with('success', 'Pendidikan baru berhasil ditambahkan.');
-}
-
-
 }

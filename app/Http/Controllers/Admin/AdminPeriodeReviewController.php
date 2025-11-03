@@ -1,64 +1,43 @@
 <?php
 
 namespace App\Http\Controllers\Admin;
-use App\Http\Controllers\FilterController;
+
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Penilaian;
 use App\Models\PermohonanPeriode;
 use App\Models\Peserta;
 use App\Models\User;
 use App\Models\PeriodeMagang;
-use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB; // ✅ TAMBAHKAN INI
 
-class PermohonanPeriodeController extends Controller
+class AdminPeriodeReviewController extends Controller
 {
-    public function index(Request $request)
-    {
-    // Query dasar
-    $query = PermohonanPeriode::with(['peserta.user', 'periode']);
+   public function lihat($id)
+{
+    // Ambil permohonan yang sedang dilihat
+    $permohonan = PermohonanPeriode::with('peserta')->findOrFail($id);
 
-    $query = FilterController::applyJenisPermohonanFilter($query, $request->jenis_permohonan);
-        $query = FilterController::applyStatusFilter($query, $request->status);
-        $query = FilterController::applyTahunMulaiFilter($query, $request->tahun_mulai);
-        $query = FilterController::applyTahunSelesaiFilter($query, $request->tahun_selesai);
-
-    // Filter pencarian
-    if ($request->filled('search')) {
-        $term = $request->input('search');
-
-        $query->where(function ($q) use ($term) {
-            $q->where('jenis_permohonan', 'like', "%{$term}%")
-              ->orWhere('alasan', 'like', "%{$term}%")
-              ->orWhereHas('peserta', function ($q2) use ($term) {
-                  $q2->where('nama', 'like', "%{$term}%")
-                     ->orWhereHas('user', function ($q3) use ($term) {
-                         $q3->where('name', 'like', "%{$term}%");
-                     });
-              });
-        });
+    // Ambil peserta dari permohonan
+    $peserta = $permohonan->peserta;
+    
+    // ✅ AMBIL RIWAYAT SIKAP TERAKHIR
+    $riwayatSikap = null;
+    if ($peserta) {
+        $riwayatSikap = Penilaian::with('periode')
+            ->whereHas('periode', function($query) use ($peserta) {
+                $query->where('peserta_id', $peserta->id);
+            })
+            ->orderBy('created_at', 'desc')
+            ->first();
     }
 
-    // Urutan status prioritas + urut ID desc
-    $query->orderByRaw("
-        CASE 
-            WHEN status = 'pending' THEN 1
-            WHEN status = 'disetujui' THEN 2
-            WHEN status = 'ditolak' THEN 3
-            WHEN status = 'selesai' THEN 4
-            ELSE 5
-        END
-    ")->orderByDesc('id');
-
-    // Pagination tetap jalan
-    $permohonan = $query->paginate(20)->withQueryString();
-
-     $filterOptions = [
-            'tahunOptions' => FilterController::getTahunOptions(),
-        ];
-
-    return view('admin.permohonan-periode', compact('permohonan', 'filterOptions'));
-    }
+    return view('admin.detail', compact(
+        'peserta', 
+        'permohonan', 
+        'riwayatSikap'  // ✅ TAMBAHKAN INI
+    ));
+}
 
 
 
@@ -70,7 +49,7 @@ class PermohonanPeriodeController extends Controller
 
 
 
-   public function approve($id)
+    public function approve($id)
     {
     $permohonan = PermohonanPeriode::with('periode.peserta')->findOrFail($id);
     $peserta = $permohonan->peserta;
@@ -101,9 +80,9 @@ class PermohonanPeriodeController extends Controller
         }
     }
 
-    // ===== 2. TAMBAH PERIODE =====
-if ($permohonan->jenis_permohonan === 'tambah') {
-    DB::transaction(function () use ($permohonan) {
+    // ===== 2. TAMBAH =====
+    if ($permohonan->jenis_permohonan === 'tambah') {
+        DB::transaction(function () use ($permohonan) {
         $pesertaId = $permohonan->peserta_id;
         $peserta   = Peserta::find($pesertaId);
 
@@ -142,13 +121,15 @@ if ($permohonan->jenis_permohonan === 'tambah') {
                 ]);
             }
 
-            // Update peserta menjadi aktif di periode baru
+            // Update peserta menjadi aktif di rencana periode baru
             $peserta->update([
                 'status'               => 'aktif',
             ]);
         }
+
+        // Update permohonan
     });
-}
+    }
 
     // ===== 3. MUNDUR =====
    if ($permohonan->jenis_permohonan === 'mundur') {
@@ -159,18 +140,20 @@ if ($permohonan->jenis_permohonan === 'tambah') {
         ->first();
     // 🔹 Update data peserta
     if ($peserta) {
-            $peserta->update([
-                'status'               => 'mundur',
-                'periode_aktif_id'     => null,
-                'alasan'               => $permohonan->alasan,
-            ]);
-            }
+        $peserta->update([
+            'status'               => 'mundur',
+            'periode_aktif_id'     => null,
+            'alasan'               => $permohonan->alasan,
+        ]);
+        }
 
-    // 🔹 Kalau ada, ubah jadi dibatalkan
+
+        // 🔹 Kalau ada, ubah jadi dibatalkan
     if ($periodeAktif) {
         $periodeAktif->update([
-            'status'               => 'dibatalkan',
-            'alasan'               => $permohonan->alasan,
+                'status'               => 'dibatalkan',
+                'alasan'               => $permohonan->alasan,
+
         ]);
     }
     }
@@ -178,7 +161,7 @@ if ($permohonan->jenis_permohonan === 'tambah') {
 
     // ===== 4. MAGANG KEMBALI =====
     if ($permohonan->jenis_permohonan === 'permohonanmagangkembali') {
-        DB::transaction(function () use ($permohonan) {
+         DB::transaction(function () use ($permohonan) {
             $pesertaId = $permohonan->peserta_id;
             $peserta = Peserta::find($pesertaId);
             if (!$peserta) {
@@ -212,7 +195,7 @@ if ($permohonan->jenis_permohonan === 'tambah') {
             // Update peserta — **penting untuk naik periode aktif**
             $peserta->update([
                 'periode_aktif_id'      => $periodeBaru->id,
-                'tanggal_mulai'       => $permohonan->tanggal_mulai,
+                'tanggal_mulai'         => $permohonan->tanggal_mulai,
                 'tanggal_selesai_lama'  => $peserta->tanggal_selesai,
                 'tanggal_selesai'       => $permohonan->tanggal_selesai,
                 'status'                => 'aktif',
@@ -225,10 +208,26 @@ if ($permohonan->jenis_permohonan === 'tambah') {
             ]);
         });
     }
+        return redirect()->route('admin.permohonan-periode', $id)
+            ->with('success', 'Permohonan berhasil disetujui.');
+    }
 
-    return redirect()->route('admin.permohonan-periode')
-        ->with('success', 'Permohonan berhasil disetujui.');
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -236,17 +235,49 @@ if ($permohonan->jenis_permohonan === 'tambah') {
 
     public function reject($id)
     {
-        $permohonan = PermohonanPeriode::findOrFail($id);
+       $permohonan = PermohonanPeriode::findOrFail($id);
 
         $permohonan->status = 'ditolak';
         $permohonan->tanggal_disetujui = null;
         $permohonan->save();
+        return redirect()->route('admin.permohonan-periode', $id)
+            ->with('error', 'Permohonan telah ditolak.');
+    }
+    
+    public function updateTanggalMulai(Request $request, $id)
+{
+    $request->validate([
+        'tanggal_mulai' => 'required|date',
+    ]);
 
-        return redirect()->route('admin.permohonan-periode')
-            ->with('error', 'Permohonan ditolak.');
+    $permohonan = PermohonanPeriode::findOrFail($id);
+
+    // Validasi agar tidak melanggar tanggal selesai
+    if ($permohonan->tanggal_selesai && $request->tanggal_mulai > $permohonan->tanggal_selesai) {
+        return back()->with('error', 'Tanggal mulai tidak boleh setelah tanggal selesai.');
     }
 
+    $permohonan->update(['tanggal_mulai' => $request->tanggal_mulai]);
 
-    
-    
+    return back()->with('success', 'Tanggal mulai permohonan berhasil diperbarui.');
+}
+
+public function updateTanggalSelesai(Request $request, $id)
+{
+    $request->validate([
+        'tanggal_selesai' => 'required|date',
+    ]);
+
+    $permohonan = PermohonanPeriode::findOrFail($id);
+
+    // Validasi agar tidak lebih awal dari tanggal mulai
+    if ($permohonan->tanggal_mulai && $request->tanggal_selesai < $permohonan->tanggal_mulai) {
+        return back()->with('error', 'Tanggal selesai tidak boleh sebelum tanggal mulai.');
+    }
+
+    $permohonan->update(['tanggal_selesai' => $request->tanggal_selesai]);
+
+    return back()->with('success', 'Tanggal selesai permohonan berhasil diperbarui.');
+}
+
 }

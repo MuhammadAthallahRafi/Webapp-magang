@@ -14,6 +14,7 @@ class PeriodeMagang extends Model
     protected $fillable = [
         'peserta_id',
         'periode_ke',
+        'status',
         'tanggal_mulai',
         'tanggal_selesai',
         'tanggal_selesai_lama',
@@ -25,6 +26,18 @@ class PeriodeMagang extends Model
     public function peserta()
     {
         return $this->belongsTo(Peserta::class, 'peserta_id');
+    }
+
+    // Relationship ke Penilaian dengan foreign key yang benar
+    public function penilaian()
+    {
+        return $this->hasOne(Penilaian::class, 'periode_magang_id'); // ⬅️ GUNAKAN periose_magang_id
+    }
+    
+    // Alias untuk konsistensi (optional)
+    public function sikap()
+    {
+        return $this->penilaian();
     }
 
     /**

@@ -3,17 +3,141 @@
 @section('title', 'Peserta Unit Kerja Magang')
 
 @section('content')
-<div class="px-6 py-4">
+<div class="px-6 py-4" x-data="filterState()">
     <h1 class="text-2xl font-bold mb-6">Daftar Peserta Magang</h1>
 
-    {{-- Search --}}
-    <form method="GET" class="mb-4">
-        <input name="search" type="text" placeholder="Cari nama..." value="{{ request('search') }}"
-               class="border rounded px-4 py-2 w-1/3 text-sm focus:outline-none focus:ring">
-        <button type="submit" class="ml-2 bg-blue-500 text-white px-4 py-2 rounded text-sm">Cari</button>
-    </form>
+    <!-- Header dengan Search dan Filter Button -->
+    <div class="flex justify-between items-center mb-6">
+        <!-- Search Box -->
+        <form method="GET" class="flex gap-2">
+            <input type="text" name="search" value="{{ request('search') }}" 
+                   placeholder="Cari nama, NIK, atau ID..." 
+                   class="border rounded-lg px-4 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                🔍 Cari
+            </button>
+        </form>
+        
+        <!-- Filter Button -->
+        <button type="button" 
+                @click="openFilterModal()"
+                class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 flex items-center gap-2">
+            ⚙️ Filter
+            @if(request()->anyFilled(['status', 'kelamin', 'tahun_mulai', 'tahun_selesai', 'nilai_min', 'nilai_max']))
+            <span class="bg-red-500 text-white rounded-full w-2 h-2"></span>
+            @endif
+        </button>
+    </div>
 
-    {{-- Flash Message --}}
+    <!-- Filter Modal -->
+    <div x-show="isFilterModalOpen" 
+         x-cloak
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 backdrop-blur-sm"
+         @click.self="closeFilterModal()"
+         @keydown.escape="closeFilterModal()">
+         
+        <div class="bg-white rounded-2xl shadow-xl w-[32rem] transform transition-all duration-300 scale-100">
+            <!-- Header -->
+            <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800">Filter Data Peserta</h2>
+                <button type="button" 
+                        @click="closeFilterModal()"
+                        class="text-gray-500 hover:text-gray-700 text-xl rounded-full hover:bg-gray-100 w-8 h-8 flex items-center justify-center">
+                    ×
+                </button>
+            </div>
+
+            <!-- Filter Form -->
+            <form method="GET" class="p-6 space-y-4">
+                <!-- Status & Jenis Kelamin - Horizontal -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Semua Status</option>
+                            <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                            <option value="lulus" {{ request('status') == 'lulus' ? 'selected' : '' }}>Lulus</option>
+                            <option value="mundur" {{ request('status') == 'mundur' ? 'selected' : '' }}>Mundur</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Kelamin</label>
+                        <select name="kelamin" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Semua</option>
+                            <option value="L" {{ request('kelamin') == 'L' ? 'selected' : '' }}>Laki-laki</option>
+                            <option value="P" {{ request('kelamin') == 'P' ? 'selected' : '' }}>Perempuan</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tahun Mulai & Selesai - Horizontal -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tahun Mulai</label>
+                        <select name="tahun_mulai" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Semua Tahun</option>
+                            @foreach($filterOptions['tahunOptions'] as $tahun)
+                            <option value="{{ $tahun }}" {{ request('tahun_mulai') == $tahun ? 'selected' : '' }}>
+                                {{ $tahun }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tahun Selesai</label>
+                        <select name="tahun_selesai" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Semua Tahun</option>
+                            @foreach($filterOptions['tahunOptions'] as $tahun)
+                            <option value="{{ $tahun }}" {{ request('tahun_selesai') == $tahun ? 'selected' : '' }}>
+                                {{ $tahun }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Rentang Nilai - Horizontal -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Rentang Nilai</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="number" name="nilai_min" value="{{ request('nilai_min') }}" 
+                               placeholder="Nilai minimal" min="0" max="100"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="number" name="nilai_max" value="{{ request('nilai_max') }}" 
+                               placeholder="Nilai maksimal" min="0" max="100"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button type="button" 
+                            @click="closeFilterModal()"
+                            class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition text-sm">
+                        Batal
+                    </button>
+                    <a href="{{ request()->url() }}" 
+                       class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition text-sm">
+                        🔄 Reset
+                    </a>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm font-medium">
+                        ✅ Terapkan Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Flash Message -->
     @if (session('success'))
         <div 
             x-data="{ show: true }" 
@@ -36,63 +160,99 @@
         </div>
     @endif
 
-    {{-- Table --}}
-    <div class="overflow-x-auto bg-white rounded shadow">
+    <!-- Table -->
+    <div class="overflow-x-auto bg-white rounded-lg shadow-sm border">
         <table class="w-full text-sm text-left text-gray-800">
             <thead class="bg-blue-600 text-white">
                 <tr>
-                    <th class="px-3 py-2">Nama</th>
-                    <th class="px-3 py-2">Email</th>
-                    <th class="px-3 py-2">Nilai</th>
-                    <th class="px-3 py-2">Status</th>
-                    <th class="px-3 py-2">Aksi</th>
+                    <th class="px-4 py-3 font-semibold">Nama</th>
+                    <th class="px-4 py-3 font-semibold">No. Telp</th>
+                    <th class="px-4 py-3 font-semibold">Email</th>
+                    <th class="px-4 py-3 font-semibold">Tanggal Mulai</th>
+                    <th class="px-4 py-3 font-semibold">Tanggal Selesai</th>
+                    <th class="px-4 py-3 font-semibold">Nilai</th>
+                    <th class="px-4 py-3 font-semibold">Status</th>
+                    <th class="px-4 py-3 font-semibold">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($pesertas as $peserta)
-                    <tr class="border-b">
-                        <td class="px-3 py-2">{{ $peserta->nama }}</td>
-                        <td class="px-3 py-2">{{ $peserta->user->email }}</td>
-                        <td class="px-3 py-2">
-                            <form action="{{ route('admin-unitkerja.peserta-magang.update-nilai', $peserta->id) }}" method="POST">
-                                @csrf
-                                <input type="number" name="nilai" value="{{ $peserta->nilai ?? '' }}"
-                                    class="w-20 text-sm border px-2 py-1 rounded"
-                                    onchange="this.form.submit()" min="0" max="100">
-                            </form>
+                    <tr class="border-b hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 font-medium text-gray-900">{{ $peserta->nama }}</td>
+                        <td class="px-4 py-3">{{ $peserta->no_telp }}</td>
+                        <td class="px-4 py-3">{{ $peserta->user->email }}</td>
+                        <td class="px-4 py-3">{{ $peserta->tanggal_mulai ? \Carbon\Carbon::parse($peserta->tanggal_mulai)->format('d/m/Y') : '-' }}</td>
+                        <td class="px-4 py-3">{{ $peserta->tanggal_selesai ? \Carbon\Carbon::parse($peserta->tanggal_selesai)->format('d/m/Y') : '-' }}</td>
+                        <td class="px-4 py-3">
+                            <span class="font-semibold {{ $peserta->nilai >= 75 ? 'text-green-600' : ($peserta->nilai >= 60 ? 'text-yellow-600' : 'text-red-600') }}">
+                                {{ $peserta->nilai ?? '-' }}
+                            </span>
                         </td>
-                        <td class="px-3 py-2">
-                            <form action="{{ route('admin-unitkerja.peserta-magang.update-status', $peserta->id) }}" method="POST">
-                                @csrf
-                                <select name="status" onchange="this.form.submit()" class="text-sm border rounded px-2 py-1 w-full">
-                                    <option value="aktif" {{ $peserta->status == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                                    <option value="lulus" {{ $peserta->status == 'lulus' ? 'selected' : '' }}>Lulus</option>
-                                    <option value="gagal" {{ $peserta->status == 'gagal' ? 'selected' : '' }}>Gagal</option>
-                                </select>
-                            </form>
+                        <td class="px-4 py-3">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium
+                                @if($peserta->status == 'aktif') bg-green-100 text-green-800
+                                @elseif($peserta->status == 'lulus') bg-blue-100 text-blue-800
+                                @elseif($peserta->status == 'mundur') bg-red-100 text-red-800
+                                @else bg-gray-100 text-gray-800 @endif">
+                                {{ ucfirst($peserta->status) }}
+                            </span>
                         </td>
-                        <td class="px-3 py-2 relative" x-data="{ open: false }">
-                            <button @click="open = !open" class="bg-gray-200 text-sm px-3 py-1 rounded hover:bg-gray-300">
-                                ⋮ Aksi
-                            </button>
-                            <div 
-                                x-show="open" 
-                                @click.away="open = false" 
-                                x-transition 
-                                class="absolute right-0 mt-1 bg-white border shadow-md rounded z-10 w-48"
-                                style="display: none;"
-                            >
-                                <a href="{{ route('admin-unitkerja.peserta-magang.lihat', $peserta->id) }}" class="block px-4 py-2 hover:bg-gray-100">Detail Peserta</a>
-                                <a href="{{ route('admin-unitkerja.peserta-magang.periode', $peserta->id) }}" class="block px-4 py-2 hover:bg-gray-100">Riwayat Periode</a>
-                                <a href="{{ route('admin-unitkerja.peserta-magang.absensi', $peserta->id) }}" class="block px-4 py-2 hover:bg-gray-100">Riwayat Absensi</a>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <!-- Detail Peserta -->
+                                <a href="{{ route('admin-unitkerja.peserta-magang.lihat', $peserta->id) }}"
+                                   class="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-700 transition-colors"
+                                   title="Detail Peserta">
+                                    👁️
+                                </a>
+
+                                <!-- Riwayat Absensi -->
+                                <a href="{{ route('admin-unitkerja.peserta-magang.absensi', $peserta->id) }}"
+                                   class="p-2 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 transition-colors"
+                                   title="Riwayat Absensi">
+                                    📅
+                                </a>
+
+                                <!-- Riwayat Periode -->
+                                <a href="{{ route('admin-unitkerja.peserta-magang.periode', $peserta->id) }}"
+                                   class="p-2 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-700 transition-colors"
+                                   title="Periode & Permohonan">
+                                    ⏳
+                                </a>
                             </div>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="text-center py-4">Belum ada Peserta magang.</td></tr>
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-gray-500">
+                            <div class="flex flex-col items-center justify-center">
+                                <span class="text-4xl mb-2">📭</span>
+                                <p class="text-lg font-medium">Tidak ada data peserta</p>
+                                <p class="text-sm">Belum ada peserta magang di unit kerja Anda</p>
+                            </div>
+                        </td>
+                    </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 </div>
+
+<script>
+function filterState() {
+    return {
+        isFilterModalOpen: false,
+        
+        openFilterModal() {
+            this.isFilterModalOpen = true;
+            document.body.classList.add('overflow-hidden');
+        },
+        
+        closeFilterModal() {
+            this.isFilterModalOpen = false;
+            document.body.classList.remove('overflow-hidden');
+        }
+    }
+}
+</script>
 @endsection

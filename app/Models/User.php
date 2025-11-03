@@ -52,7 +52,7 @@ class User extends Authenticatable
     }
     public function pelamar()
     {
-        return $this->hasOne(\App\Models\Pelamar::class, 'user_id');
+        return $this->hasOne(\App\Models\Pelamar::class, 'user_id','id');
     }
     public function peserta()
     {
@@ -63,10 +63,10 @@ class User extends Authenticatable
 {
     return $this->hasMany(PermohonanPeriode::class, 'peserta_id');
 }
-
+    
     public function pesertaMagang()
     {
         return $this->hasOne(pesertaMagang::class, 'user_id');
     }
-
+    
 }

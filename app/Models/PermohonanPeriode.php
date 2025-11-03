@@ -21,6 +21,7 @@ class PermohonanPeriode extends Model
     'alasan',
     'tanggal_pengajuan',
     'status',
+    'surat',
     'tanggal_disetujui',
     ];
 
@@ -41,6 +42,11 @@ class PermohonanPeriode extends Model
     {
         return $this->belongsTo(Peserta::class, 'peserta_id');
     }
+
+    public function user()
+{
+    return $this->belongsTo(User::class, 'user_id');
+}
 
     /**
      * Relasi ke PeriodeMagang

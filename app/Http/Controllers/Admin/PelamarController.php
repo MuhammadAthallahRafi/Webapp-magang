@@ -27,12 +27,16 @@ class PelamarController extends Controller
         ->when($request->filled('search'), function ($q) use ($request) {
             $term = $request->input('search');
             $q->where('nama', 'like', "%{$term}%")
-              ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$term}%"));
+                ->orWhere('nik', 'like', "%{$term}%") // 🔍 TAMBAH INI
+                ->orWhere('email', 'like', "%{$term}%")
+                ->orWhere('no_telp', 'like', "%{$term}%")
+                ->orWhere('kampus', 'like', "%{$term}%")
+                    ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$term}%"));
         })
         ->get();
 
     // --- 2️⃣ Ambil peserta dengan permohonan magang kembali
-        $pelamarKembali = Peserta::whereHas('permohonanPeriode', function ($q) {
+    $pelamarKembali = Peserta::whereHas('permohonanPeriode', function ($q) {
             $q->whereIn('jenis_permohonan', ['permohonanmagangkembali', 'tambah', 'percepat','mundur'])
             ->where('status', 'pending');
         })
@@ -41,6 +45,15 @@ class PelamarController extends Controller
                 ->where('status', 'pending')
                 ->orderBy('created_at', 'desc');
         }])
+        ->when($request->filled('search'), function ($q) use ($request) {
+            $term = $request->input('search');
+            $q->where('nama', 'like', "%{$term}%")
+                ->orWhere('nik', 'like', "%{$term}%") // 🔍 TAMBAH INI
+                ->orWhere('email', 'like', "%{$term}%")
+                ->orWhere('no_telp', 'like', "%{$term}%")
+                ->orWhere('kampus', 'like', "%{$term}%")
+              ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$term}%"));
+        })
         ->get();
 
     // --- 3️⃣ Gabungkan keduanya jadi satu koleksi unik
@@ -73,8 +86,6 @@ class PelamarController extends Controller
 
     /**
      * Admin menerima pelamar menjadi magang (mengubah role & status di tabel users).
-     */
-
     public function daftarMagang()
     {
         // Ambil semua user yang sudah jadi magang
@@ -84,7 +95,7 @@ class PelamarController extends Controller
 
         return view('admin.peserta-magang', compact('magangs'));
     }
-
+        */
 
         public function terima(Request $request, $id)
 {
@@ -193,7 +204,41 @@ public function perbaikan(Request $request, $id)
 }
 
 
+ public function updateTanggalMulai(Request $request, $id)
+    {
+    $request->validate([
+        'tanggal_mulai' => 'required|date',
+    ]);
 
+    $pelamar = Pelamar::findOrFail($id);
+
+    // Validasi agar tidak melanggar tanggal selesai
+    if ($pelamar->tanggal_selesai && $request->tanggal_mulai > $pelamar->tanggal_selesai) {
+        return back()->with('error', 'Tanggal mulai tidak boleh setelah tanggal selesai.');
+    }
+
+    $pelamar->update(['tanggal_mulai' => $request->tanggal_mulai]);
+
+    return back()->with('success', 'Tanggal mulai berhasil diperbarui.');
+    }
+
+    public function updateTanggalSelesai(Request $request, $id)
+    {
+    $request->validate([
+        'tanggal_selesai' => 'required|date',
+    ]);
+
+    $pelamar = Pelamar::findOrFail($id);
+
+    // Validasi agar tidak lebih awal dari tanggal mulai
+    if ($pelamar->tanggal_mulai && $request->tanggal_selesai < $pelamar->tanggal_mulai) {
+        return back()->with('error', 'Tanggal selesai tidak boleh sebelum tanggal mulai.');
+    }
+
+    $pelamar->update(['tanggal_selesai' => $request->tanggal_selesai]);
+
+    return back()->with('success', 'Tanggal selesai berhasil diperbarui.');
+    }
 
 
 

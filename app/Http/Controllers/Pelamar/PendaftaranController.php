@@ -9,6 +9,39 @@ use Illuminate\Support\Facades\Storage;
 
 class PendaftaranController extends Controller
 {
+
+    public function center($id = null)
+{
+    // ambil user login
+    $user = auth()->user();
+
+    // cari pelamar berdasarkan user_id (bukan id pelamar)
+    $pelamar = \App\Models\Pelamar::with('user')
+        ->where('user_id', $user->id)
+        ->first();
+
+    // jika belum isi form
+    if (!$pelamar) {
+        return redirect()->route('form.pendaftaran')
+            ->with('info', 'Silakan isi form pendaftaran terlebih dahulu.');
+    }
+
+    // ambil alasan jika ada
+    $alasan_penolakan = $pelamar->alasan_penolakan ?? null;
+    $alasan_perbaikan = $pelamar->alasan_perbaikan ?? null;
+
+    // kirim semua data ke view center
+    return view('pelamar.center', [
+        'user'              => $user,
+        'pelamar'           => $pelamar,
+        'alasan_penolakan'  => $alasan_penolakan,
+        'alasan_perbaikan'  => $alasan_perbaikan,
+    ]);
+}
+
+
+
+
     public function store(Request $request)
     {
         if (Pelamar::where('user_id', auth()->id())->exists()) {
@@ -17,18 +50,35 @@ class PendaftaranController extends Controller
         $request->validate([
             'nama'     => 'required|string|max:255',
             'kelamin'  => 'required|in:L,P', // ✅ validasi enum
-            'nik'      => 'required|string|max:50',
+            'nik'      => 'required|digits:16|numeric|unique:pelamars,nik',
             'kampus'   => 'required|string|max:255',
             'jurusan'  => 'required|string|max:255',
             'no_telp'  => 'required|string|max:20',
             'email'    => 'required|email|max:255',
             'alamat'   => 'required|string',
-            'tanggal_mulai'   => 'required|date',
-            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'tanggal_mulai'     => 'required|date|after_or_equal:today',
+            'tanggal_selesai' => 'required|date|after:tanggal_mulai',
             'cv'       => 'required|mimes:pdf|max:2048',
             'transkrip' => 'required|mimes:pdf|max:2048',
-            'surat'    => 'required|mimes:pdf|max:2048',
-        ]);
+            'surat'    => 'required|mimes:pdf|max:2048',]
+            ,[
+            'nik.unique' => 'NIK sudah terdaftar. Gunakan NIK lain.', // ✅ PESAN CUSTOM
+            'tanggal_mulai.after_or_equal' => 'Tanggal mulai tidak boleh sebelum hari ini.',
+            'tanggal_selesai.after_or_equal' => 'Tanggal selesai tidak boleh sebelum tanggal mulai.',
+            'nik.numeric' => 'NIK harus berupa angka.',
+            'tanggal_mulai.required' => 'Tanggal mulai wajib diisi.',
+            'tanggal_selesai.required' => 'Tanggal selesai wajib diisi.',
+            'tanggal_selesai.after' => 'Tanggal selesai harus setelah tanggal mulai.',
+            'cv.required' => 'File CV wajib diupload.',
+            'cv.mimes' => 'File CV harus format PDF.',
+            'cv.max' => 'File CV maksimal 2MB.',
+            'transkrip.required' => 'File transkrip wajib diupload.',
+            'transkrip.mimes' => 'File transkrip harus format PDF.',
+            'transkrip.max' => 'File transkrip maksimal 2MB.',
+            'surat.required' => 'File surat pengantar wajib diupload.',
+            'surat.mimes' => 'File surat pengantar harus format PDF.',
+            'surat.max' => 'File surat pengantar maksimal 2MB.',
+            ]);
 
         // Simpan file CV
         $cvPath        = $request->file('cv')->store('cv', 'public');
@@ -65,42 +115,53 @@ class PendaftaranController extends Controller
 
         
         
-        return redirect()->route('form.terimakasih');
+        return redirect()->route('pelamar.center');
     }
 
     
     public function terimaKasih()
     {
         $pelamar = Pelamar::where('user_id', auth()->id())->first();
-        return view('pelamar.terima-kasih', compact('pelamar'));
+        return view('pelamar.center', compact('pelamar'));
     }
 
-    public function showPenolakan($id)
-    {
-        $user = \App\Models\User::with('pelamar')->findOrFail($id);
+  public function showPenolakan($id)
+{
+    // Ambil pelamar berdasarkan id pelamar (sesuai kebutuhan kamu)
+    $pelamar = \App\Models\Pelamar::with('user')->findOrFail($id);
 
-        $alasan = $user->pelamar->alasan_penolakan ?? 'Tidak ada alasan diberikan';
+    // ambil user lewat relasi
+    $user = $pelamar->user;
 
-        return view('pelamar.penolakan', [
-        'alasan' => $alasan,
-        'id' => $id, // ✅ dikirimkan
+    // ambil alasan dari model pelamar (fallback teks jika kosong)
+    $alasan = $pelamar->alasan_penolakan ?? 'Tidak ada alasan diberikan';
+
+    // kirim semua variabel yang mungkin dibutuhkan view
+    return view('pelamar.penolakan', [
+        'alasan'  => $alasan,
+        'id'      => $id,
+        'user'    => $user,
+        'pelamar' => $pelamar,
     ]);
+}
 
-    }
 
    public function showPerbaikan($id)
 {
-    $user = \App\Models\User::with('pelamar')->findOrFail($id);
-    $pelamar = $user->pelamar;
+    // Ambil pelamar langsung berdasarkan id pelamar
+    $pelamar = \App\Models\Pelamar::with('user')->findOrFail($id);
+
     $alasan = $pelamar->alasan_perbaikan ?? 'Tidak ada alasan diberikan';
+    $user = $pelamar->user; // ambil data user-nya dari relasi
 
     return view('pelamar.perbaikan', [
         'alasan'  => $alasan,
-        'id'=> $id,
-        'user' => $user,
-        'pelamar' => $pelamar, // ✅ dikirimkan
+        'id'      => $id,
+        'user'    => $user,
+        'pelamar' => $pelamar,
     ]);
 }
+
 
 
     public function edit($id)
@@ -114,18 +175,37 @@ class PendaftaranController extends Controller
     $pelamar = Pelamar::findOrFail($id);
     $request->validate([
         'nama'      => 'required|string|max:255',
-        'kelamin'  => 'required|in:L,P',
-        'nik'       => 'required|string|max:50'.$pelamar->id,
+        'kelamin'   => 'required|in:L,P',
+         'nik'      => 'required|digits:16|numeric|unique:pelamars,nik,' . $pelamar->id,
         'kampus'    => 'required|string|max:255',
         'jurusan'   => 'required|string|max:255',
         'no_telp'   => 'required|string|max:20',
         'email'     => 'required|email',
         'alamat'    => 'required|string',
+        'tanggal_mulai'     => 'required|date|after_or_equal:today',
+        'tanggal_selesai'   => 'required|date|after_or_equal:tanggal_mulai',
         'cv'        => 'nullable|file|mimes:pdf,doc,docx|max:2048',
         'transkrip' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
         'surat'     => 'nullable|file|mimes:pdf,doc,docx|max:2048',
-        'status'    => 'pending',
-    ]);
+        ]
+        ,[
+            'nik.unique' => 'NIK sudah terdaftar. Gunakan NIK lain.', // ✅ PESAN CUSTOM
+            'tanggal_mulai.after_or_equal' => 'Tanggal mulai tidak boleh sebelum hari ini.',
+            'tanggal_selesai.after_or_equal' => 'Tanggal selesai tidak boleh sebelum tanggal mulai.',
+            'nik.numeric' => 'NIK harus berupa angka.',
+            'tanggal_mulai.required' => 'Tanggal mulai wajib diisi.',
+            'tanggal_selesai.required' => 'Tanggal selesai wajib diisi.',
+            'tanggal_selesai.after' => 'Tanggal selesai harus setelah tanggal mulai.',
+            'cv.required' => 'File CV wajib diupload.',
+            'cv.mimes' => 'File CV harus format PDF.',
+            'cv.max' => 'File CV maksimal 2MB.',
+            'transkrip.required' => 'File transkrip wajib diupload.',
+            'transkrip.mimes' => 'File transkrip harus format PDF.',
+            'transkrip.max' => 'File transkrip maksimal 2MB.',
+            'surat.required' => 'File surat pengantar wajib diupload.',
+            'surat.mimes' => 'File surat pengantar harus format PDF.',
+            'surat.max' => 'File surat pengantar maksimal 2MB.',
+        ]);
 
     $data = $request->except(['cv','transkrip','surat']);
 
@@ -141,9 +221,32 @@ class PendaftaranController extends Controller
         $data['surat'] = $request->file('surat')->store('surat', 'public');
     }
 
+    if ($pelamar->status === 'perbaikan'){
+        $pelamar->update([
+            'status'           => 'telahdiperbaiki',
+        ]);
+        }
     $pelamar->update($data);
+    
+    return redirect()->route('pelamar.data-diri')->with('success', 'Formulir berhasil diperbarui.');
+}
+public function dataDiri()
+{
+    $user = auth()->user();
 
-    return redirect()->route('form.terimakasih')->with('success', 'Formulir berhasil diperbarui.');
+    // Pastikan hanya role pelamar yang bisa akses
+    if ($user->role !== 'pelamar') {
+        abort(403, 'Akses ditolak.');
+    }
+
+    $pelamar = $user->pelamar; // Relasi user -> pelamar
+
+    if (!$pelamar) {
+        return redirect()->route('form-pendaftaran')
+            ->with('info', 'Kamu belum mengisi form pendaftaran.');
+    }
+
+    return view('pelamar.data-diri', compact('pelamar'));
 }
 
 

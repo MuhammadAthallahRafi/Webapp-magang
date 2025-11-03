@@ -7,6 +7,7 @@ use App\Models\Peserta;
 use App\Models\PeriodeMagang;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 
 
 class PesertaLulusController extends Controller

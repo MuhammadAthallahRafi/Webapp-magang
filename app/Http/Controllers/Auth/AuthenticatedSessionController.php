@@ -31,6 +31,9 @@ class AuthenticatedSessionController extends Controller
     $user = auth()->user();
 
     // Redirect berdasarkan role
+    if ($user->status === 'off') {
+            return redirect('/halamanoff');
+        } 
    if ($user->role === 'admin') {
     return redirect()->to('/dashboard/admin');
 
@@ -39,20 +42,20 @@ class AuthenticatedSessionController extends Controller
 
     } elseif ($user->role === 'magang') {
         if ($user->peserta && $user->peserta->status === 'mundur') {
-            return redirect()->route('mundur.show', $user->peserta->id);
+            return redirect()->route('dashboard.magang', $user->peserta->id);
         }
         if ($user->peserta && $user->peserta->status === 'lulus') {
-            return redirect()->route('lulus.show', $user->peserta->id);
+            return redirect()->route('dashboard.magang', $user->peserta->id);
         }
         return redirect()->to('/dashboard/magang');
 
     } elseif ($user->role === 'pelamar') {
         if ($user->pelamar && $user->pelamar->status === 'ditolak') {
-            return redirect()->route('penolakan.show', $user->pelamar->id);
+            return redirect()->route('pelamar.center', $user->pelamar->id);
         }
 
         if ($user->pelamar && $user->pelamar->status === 'perbaikan') {
-            return redirect()->route('perbaikan.show', $user->pelamar->id);
+            return redirect()->route('pelamar.center', $user->pelamar->id);
         }
 
         if (!$user->pelamar) {

@@ -44,14 +44,14 @@
 
         @if ($user->role === 'pelamar' && !$user->pelamar)
             {{-- Kalau role pelamar tapi belum isi form --}}
-            <a href="{{ route('form-pendaftaran.create') }}" 
+            <a href="{{ route('form.pendaftaran') }}" 
             class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition">
                 Lanjut Mendaftar
             </a>
 
         @elseif ($user->role === 'pelamar' && $user->pelamar->status === 'perbaikan')
             {{-- Kalau pelamar statusnya perbaikan --}}
-            <a href="{{ route('perbaikan.show', $user->pelamar->id) }}" 
+            <a href="{{ route('pelamar.center', $user->pelamar->id) }}" 
             class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition">
                 Perbaiki Formulir
             </a>

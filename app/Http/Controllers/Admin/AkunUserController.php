@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Peserta;
 use Illuminate\Http\Request;
 
 class AkunUserController extends Controller
@@ -75,4 +76,30 @@ class AkunUserController extends Controller
         User::findOrFail($id)->delete();
         return back()->with('success', 'Akun berhasil dihapus.');
     }
+
+    public function toggleStatus($id)
+{
+    $user = User::findOrFail($id);
+
+    // Toggle status user
+    $user->status = $user->status === 'off' ? 'on' : 'off';
+    $user->save();
+
+    // Jika user dinonaktifkan, ubah juga status peserta menjadi 'mundur'
+    if ($user->status === 'off') {
+        $peserta = \App\Models\Peserta::where('user_id', $user->id)->first();
+        if ($peserta) {
+            $peserta->status = 'mundur';
+            $peserta->save();
+        }
+    }
+
+    $pesan = $user->status === 'off'
+        ? 'Akun berhasil dinonaktifkan dan status peserta diubah menjadi mundur.'
+        : 'Akun berhasil diaktifkan kembali.';
+
+    return back()->with('success', $pesan);
+}
+
+
 }

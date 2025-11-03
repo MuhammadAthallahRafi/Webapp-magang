@@ -20,9 +20,10 @@ class AdminController extends Controller
         $pesertaTotal   = Peserta::count();
         $pesertaLulus   = Peserta::where('status', 'lulus')->count();
         $pesertaMundur  = Peserta::where('status', 'mundur')->count();
+        $pesertaAktif  = Peserta::where('status', 'aktif')->count();
 
         // Hitung permohonan periode
-        $permohonanPending = PermohonanPeriode::where('status', 'pending')->count();
+        $permohonanPending = PermohonanPeriode::count();
 
         return view('admin.dashboard', compact(
             'pelamarPending',
@@ -31,6 +32,7 @@ class AdminController extends Controller
             'pesertaTotal',
             'pesertaLulus',
             'pesertaMundur',
+            'pesertaAktif',
             'permohonanPending'
         ));
     }

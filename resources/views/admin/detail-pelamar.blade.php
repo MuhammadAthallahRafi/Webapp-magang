@@ -40,14 +40,102 @@
                 <strong>Alamat:</strong>
                 <p>{{ $pelamar->alamat }}</p>
             </div>
-            <div>
-                <strong>Tanggal mulai:</strong>
-                <p>{{ $pelamar->tanggal_mulai }}</p>
-            </div>
-            <div>
-                <strong>Tanggal Selesai:</strong>
-                <p>{{ $pelamar->tanggal_selesai }}</p>
-            </div>
+            <div x-data="{ openMulai: false, openSelesai: false }" x-cloak class="flex flex-col sm:flex-row gap-4 mt-4">
+
+    {{-- 🔹 Tombol Tanggal Mulai --}}
+    <button 
+        @click="openMulai = true"
+        class="px-4 py-2 rounded-xl bg-white/20 backdrop-blur-sm shadow-md border border-gray-200 text-gray-800 hover:shadow-lg transition-all duration-200 w-full sm:w-auto text-center">
+        <span class="font-medium">Mulai:</span>
+        <span class="ml-1 text-blue-600 font-semibold">{{ $pelamar->tanggal_mulai ?? '-' }}</span>
+    </button>
+
+    {{-- 🔹 Tombol Tanggal Selesai --}}
+    <button 
+        @click="openSelesai = true"
+        class="px-4 py-2 rounded-xl bg-white/20 backdrop-blur-sm shadow-md border border-gray-200 text-gray-800 hover:shadow-lg transition-all duration-200 w-full sm:w-auto text-center">
+        <span class="font-medium">Selesai:</span>
+        <span class="ml-1 text-emerald-600 font-semibold">{{ $pelamar->tanggal_selesai ?? '-' }}</span>
+    </button>
+
+    {{-- ✅ Modal Ubah Tanggal Mulai --}}
+    <div 
+        x-show="openMulai"
+        class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+        x-transition
+    >
+        <div class="bg-white p-5 rounded-xl shadow-lg w-96 relative">
+            <form method="POST" action="{{ route('pelamar.updateTanggalMulai', $pelamar->id) }}">
+                @csrf
+                @method('PUT')
+
+                <h2 class="text-lg font-semibold mb-4 text-gray-800">Ubah Tanggal Mulai</h2>
+
+                <div class="mb-3">
+                    <label for="tanggal_mulai_{{ $pelamar->id }}" class="block text-sm font-medium text-gray-700">
+                        Tanggal Mulai Baru
+                    </label>
+                    <input type="date" name="tanggal_mulai" id="tanggal_mulai_{{ $pelamar->id }}"
+                        value="{{ $pelamar->tanggal_mulai }}"
+                        class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" required>
+                </div>
+
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button type="button"
+                        @click="openMulai = false"
+                        class="px-3 py-1 rounded border text-gray-700 hover:bg-gray-100">
+                        Batal
+                    </button>
+                    <button type="submit"
+                        class="bg-blue-600 text-gray px-3 py-1 rounded hover:bg-blue-700 text-sm font-semibold shadow-md">
+                        💾 Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- ✅ Modal Ubah Tanggal Selesai --}}
+    <div 
+        x-show="openSelesai"
+        class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+        x-transition
+    >
+        <div class="bg-white p-5 rounded-xl shadow-lg w-96 relative">
+            <form method="POST" action="{{ route('pelamar.updateTanggalSelesai', $pelamar->id) }}">
+                @csrf
+                @method('PUT')
+
+                <h2 class="text-lg font-semibold mb-4 text-gray-800">Ubah Tanggal Selesai</h2>
+
+                <div class="mb-3">
+                    <label for="tanggal_selesai_{{ $pelamar->id }}" class="block text-sm font-medium text-gray-700">
+                        Tanggal Selesai Baru
+                    </label>
+                    <input type="date" name="tanggal_selesai" id="tanggal_selesai_{{ $pelamar->id }}"
+                        value="{{ $pelamar->tanggal_selesai }}"
+                        class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" required>
+                </div>
+
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button type="button"
+                        @click="openSelesai = false"
+                        class="px-3 py-1 rounded border text-gray-700 hover:bg-gray-100">
+                        Batal
+                    </button>
+                    <button type="submit"
+                        class="bg-emerald-600 text-gray px-3 py-1 rounded hover:bg-emerald-700 text-sm font-semibold shadow-md">
+                        💾 Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+
+
             <div>
     {{-- CV --}}
     @if ($pelamar->cv)
