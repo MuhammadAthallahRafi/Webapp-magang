@@ -79,7 +79,7 @@
                     Mundurkan
             </button>
             </div>
-            @else
+            @else  {{-- jika status !aktif --}}
             <div class="mt-6">
                 <p class="text-gray-500 italic text-sm">
                     Tombol aksi tidak tersedia untuk peserta dengan status {{ $peserta->status }}.
@@ -212,6 +212,42 @@
 </style>
     </div>
 </div>
+
+ <!-- Modal Mundur -->
+        <div id="modal-mundur-{{ $peserta->id }}"
+            class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+            <div class="bg-white rounded-2xl shadow-lg w-96 transform transition-all p-5">
+                <h2 class="text-lg font-semibold mb-3 text-gray-700 border-b pb-2">
+                    Mundurkan Peserta
+                </h2>
+
+                <form action="{{ route('admin-unitkerja.peserta-magang.mundur', $peserta->id) }}" method="POST">
+                    @csrf
+                    <div class="mb-4">
+                        <label for="alasan" class="block text-sm font-medium text-gray-700 mb-1">
+                            Alasan Mundur
+                        </label>
+                        <textarea name="alasan" id="alasan" rows="3" required
+                                class="w-full text-sm border rounded px-3 py-2 focus:ring focus:ring-red-200 focus:border-red-400"
+                                placeholder="Tulis alasan peserta mundur..."></textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-2">
+                        <button type="button"
+                                onclick="document.getElementById('modal-mundur-{{ $peserta->id }}').classList.add('hidden')"
+                                class="px-3 py-1 text-sm border border-gray-400 rounded hover:bg-gray-100">
+                            Batal
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-1 text-sm bg-red-500 text-gray rounded hover:bg-red-600">
+                            Simpan & Mundurkan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
 @endif
         </div>
 

@@ -74,6 +74,8 @@
                 <p class="px-2 py-1 inline-block bg-red-100 text-red-700 rounded">Ditolak</p>
             @elseif ($pelamar->status === 'diterima')
                 <p class="px-2 py-1 inline-block bg-green-100 text-green-700 rounded">Diterima</p>
+            @elseif ($pelamar->status === 'telahdiperbaiki')
+                <p class="px-2 py-1 inline-block bg-green-100 text-green-700 rounded">Telah memperbaiki</p>
             @else
                 <p class="text-gray-700">-</p>
             @endif

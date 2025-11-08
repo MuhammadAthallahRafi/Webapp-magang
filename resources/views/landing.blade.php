@@ -55,7 +55,24 @@
             class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition">
                 Perbaiki Formulir
             </a>
-
+        @elseif ($user->role === 'pelamar' && $user->pelamar->status === 'pending')
+            {{-- Kalau pelamar statusnya perbaikan --}}
+            <a href="{{ route('pelamar.center', $user->pelamar->id) }}" 
+            class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition">
+                Check Formulir Anda
+            </a>
+        @elseif ($user->role === 'pelamar' && $user->pelamar->status === 'telahdiperbaiki')
+            {{-- Kalau pelamar statusnya perbaikan --}}
+            <a href="{{ route('pelamar.center', $user->pelamar->id) }}" 
+            class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition">
+                Check Formulir Anda kembali
+            </a>
+        @elseif ($user->role === 'pelamar' && $user->pelamar->status === 'ditolak')
+            {{-- Kalau pelamar statusnya perbaikan --}}
+            <a href="{{ route('pelamar.center', $user->pelamar->id) }}" 
+            class="bg-red-600 text-white px-6 py-3 rounded hover:bg-red-700 transition">
+                Check Status anda
+            </a>
         @else
             {{-- Kalau sudah lengkap, masuk ke dashboard sesuai role --}}
             <a href="/redirect-role" 

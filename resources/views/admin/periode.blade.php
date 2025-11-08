@@ -64,9 +64,8 @@
                 <span class="font-medium text-gray-700">Status:</span>
                 <span class="px-2 py-1 rounded text-xs font-medium
                     @if($peserta->status === 'aktif') bg-green-100 text-green-800
-                    @elseif($peserta->status === 'nonaktif') bg-gray-100 text-gray-800
                     @elseif($peserta->status === 'mundur') bg-red-100 text-red-800
-                    @elseif($peserta->status === 'selesai') bg-blue-100 text-blue-800
+                    @elseif($peserta->status === 'lulus') bg-blue-100 text-blue-800
                     @else bg-yellow-100 text-yellow-800
                     @endif">
                     {{ ucfirst($peserta->status ?? 'tidak diketahui') }}

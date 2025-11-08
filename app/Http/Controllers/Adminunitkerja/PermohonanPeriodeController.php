@@ -54,7 +54,6 @@ class PermohonanPeriodeController extends Controller
             WHEN status = 'pending' THEN 1
             WHEN status = 'disetujui' THEN 2
             WHEN status = 'ditolak' THEN 3
-            WHEN status = 'selesai' THEN 4
             ELSE 5
         END
     ")->orderByDesc('id');
@@ -73,6 +72,7 @@ class PermohonanPeriodeController extends Controller
 
    public function approve($id)
 {
+    //mengambil data permohonan peserta 
     $permohonan = PermohonanPeriode::with('periode.peserta')->findOrFail($id);
     $peserta = $permohonan->peserta;
 

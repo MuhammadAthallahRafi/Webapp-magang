@@ -101,12 +101,62 @@
         </div>
     </div>
 
+   <div>
     <!-- Tombol Tambah Pendidikan -->
     <button type="button"
         onclick="document.getElementById('modal-pendidikan-{{ $peserta->id }}').classList.remove('hidden')"
-        class="mt-4 bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-xs transition">
+        class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-200 text-sm font-medium shadow-md hover:shadow-lg">
         + Tambah Pendidikan
     </button>
+
+    <!-- Modal Overlay -->
+    <div id="modal-pendidikan-{{ $peserta->id }}" class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <!-- Modal Content -->
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-95 hover:scale-100">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-gray-800">Tambah Pendidikan</h3>
+                    <button type="button" 
+                            onclick="document.getElementById('modal-pendidikan-{{ $peserta->id }}').classList.add('hidden')"
+                            class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="px-6 py-4">
+                <form action="{{ route('magang.data-diri.tambahPendidikan', $peserta->id) }}" method="POST" class="space-y-4">
+                    @csrf
+                    @method('PUT')
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Instansi Pendidikan *</label>
+                            <input type="text" name="kampus" value="{{ old('kampus', $peserta->kampus) }}" required
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 outline-none">
+                        </div>
+
+                    <!-- Modal Footer -->
+                    <div class="flex justify-end space-x-3 pt-4 mt-6 border-t border-gray-200">
+                        <button type="button"
+                                onclick="document.getElementById('modal-pendidikan-{{ $peserta->id }}').classList.add('hidden')"
+                                class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all duration-200 border border-gray-300">
+                            Batal
+                        </button>
+                        <button type="submit"
+                                class="px-5 py-2.5 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg">
+                            Simpan Pendidikan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 </div>
 
 <!-- Modal Edit Data Diri -->
@@ -444,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-    <!-- ===== TOMBOL UNTUK PESERTA AKTIF ===== -->
+<!-- ===== TOMBOL UNTUK PESERTA AKTIF ===== -->
 @if($peserta->status == 'aktif')
     @php
         // Cek apakah ada permohonan yang masih pending
@@ -558,258 +608,373 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
 
             <!-- Modal Percepatan -->
-            <!-- Modal Percepatan dengan Real-time Validation -->
-<div x-show="showPercepat" 
-     x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="opacity-0 scale-95"
-     x-transition:enter-end="opacity-100 scale-100"
-     class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-    <div class="bg-white p-5 rounded shadow-md w-[28rem] mx-4">
-        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-            🚀 Ajukan Percepatan Magang
-        </h2>
-        <form action="{{ route('magang.periode.percepat') }}" method="POST" enctype="multipart/form-data" 
-              x-data="percepatanForm()" @submit="validatePercepatan">
-            @csrf
-            @if($periodeAktif)
-                <input type="hidden" name="periode_id" value="{{ $periodeAktif->id }}">
-                <input type="hidden" id="tanggal_selesai_sekarang" value="{{ $periodeAktif->tanggal_selesai }}">
-            @endif
+            <div x-show="showPercepat" 
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                <div class="bg-white p-5 rounded shadow-md w-[28rem] mx-4">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        🚀 Ajukan Percepatan Magang
+                    </h2>
+                    <form action="{{ route('magang.periode.percepat') }}" method="POST" enctype="multipart/form-data" 
+                          x-data="percepatanForm()" @submit="validatePercepatan">
+                        @csrf
+                        @if($periodeAktif)
+                            <input type="hidden" name="periode_id" value="{{ $periodeAktif->id }}">
+                            <input type="hidden" id="tanggal_selesai_sekarang" value="{{ $periodeAktif->tanggal_selesai }}">
+                        @endif
 
-            <div class="mb-3">
-                <label class="block text-sm font-medium text-gray-700">Tanggal Selesai Baru *</label>
-                <input type="date" 
-                       name="tanggal_selesai" 
-                       x-model="tanggalSelesai"
-                       @change="validateTanggalPercepatan()"
-                       :class="{
-                           'border-red-300': errors.tanggalSelesai,
-                           'border-green-300': isValid.tanggalSelesai,
-                           'border-gray-300': !errors.tanggalSelesai && !isValid.tanggalSelesai
-                       }"
-                       required 
-                       class="w-full border rounded p-2 focus:ring-2 focus:ring-red-300 transition-colors">
-                
-                <!-- Error Message -->
-                <template x-if="errors.tanggalSelesai">
-                    <p class="text-red-500 text-xs mt-1" x-text="errors.tanggalSelesai"></p>
-                </template>
-                
-                <!-- Success Message -->
-                <template x-if="isValid.tanggalSelesai">
-                    <p class="text-green-500 text-xs mt-1" x-text="isValid.tanggalSelesai"></p>
-                </template>
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-700">Tanggal Selesai Baru *</label>
+                            <input type="date" 
+                                   name="tanggal_selesai" 
+                                   x-model="tanggalSelesai"
+                                   @change="validateTanggalPercepatan()"
+                                   :class="{
+                                       'border-red-300': errors.tanggalSelesai,
+                                       'border-green-300': isValid.tanggalSelesai,
+                                       'border-gray-300': !errors.tanggalSelesai && !isValid.tanggalSelesai
+                                   }"
+                                   required 
+                                   class="w-full border rounded p-2 focus:ring-2 focus:ring-red-300 transition-colors">
+                            
+                            <!-- Error Message -->
+                            <template x-if="errors.tanggalSelesai">
+                                <p class="text-red-500 text-xs mt-1" x-text="errors.tanggalSelesai"></p>
+                            </template>
+                            
+                            <!-- Success Message -->
+                            <template x-if="isValid.tanggalSelesai">
+                                <p class="text-green-500 text-xs mt-1" x-text="isValid.tanggalSelesai"></p>
+                            </template>
 
-                <!-- Info Tanggal Saat Ini -->
-                <div class="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
-                    <strong>Info:</strong> Tanggal selesai periode saat ini: 
-                    <span class="font-semibold">{{ $periodeAktif->tanggal_selesai ?? 'Tidak tersedia' }}</span>
+                            <!-- Info Tanggal Saat Ini -->
+                            <div class="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
+                                <strong>Info:</strong> Tanggal selesai periode saat ini: 
+                                <span class="font-semibold">{{ $periodeAktif->tanggal_selesai ?? 'Tidak tersedia' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-700">Alasan *</label>
+                            <textarea name="alasan" 
+                                      rows="3" 
+                                      x-model="alasan"
+                                      @input="validateAlasan()"
+                                      :class="{
+                                          'border-red-300': errors.alasan,
+                                          'border-green-300': isValid.alasan,
+                                          'border-gray-300': !errors.alasan && !isValid.alasan
+                                      }"
+                                      required 
+                                      class="w-full border rounded p-2 focus:ring-2 focus:ring-red-300 transition-colors"
+                                      placeholder="Jelaskan alasan percepatan magang..."></textarea>
+                            
+                            <template x-if="errors.alasan">
+                                <p class="text-red-500 text-xs mt-1" x-text="errors.alasan"></p>
+                            </template>
+                            
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>Minimal 10 karakter</span>
+                                <span x-text="`${alasan.length}/500`"></span>
+                            </div>
+                        </div>
+                        
+                        {{-- Input Upload Surat --}}
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                📎 Upload Surat Permohonan (Opsional)
+                            </label>
+                            <input type="file" 
+                                   name="surat" 
+                                   @change="validateSurat($el)"
+                                   accept=".pdf"
+                                   class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
+                            
+                            <template x-if="errors.surat">
+                                <p class="text-red-500 text-xs mt-1" x-text="errors.surat"></p>
+                            </template>
+                            
+                            <p class="text-xs text-gray-500 mt-1">
+                                Format: PDF saja (Maks: 2MB)
+                            </p>
+                        </div>
+
+                        <div class="flex justify-end mt-4 gap-2">
+                            <button type="button" @click="showPercepat = false"
+                                    class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 transition">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                    :disabled="!formValid"
+                                    :class="{
+                                        'bg-red-500 hover:bg-red-600': formValid,
+                                        'bg-red-300 cursor-not-allowed': !formValid
+                                    }"
+                                    class="px-4 py-2 text-white rounded transition font-medium">
+                                Kirim Permohonan
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
-            <div class="mb-3">
-                <label class="block text-sm font-medium text-gray-700">Alasan *</label>
-                <textarea name="alasan" 
-                          rows="3" 
-                          x-model="alasan"
-                          @input="validateAlasan()"
-                          :class="{
-                              'border-red-300': errors.alasan,
-                              'border-green-300': isValid.alasan,
-                              'border-gray-300': !errors.alasan && !isValid.alasan
-                          }"
-                          required 
-                          class="w-full border rounded p-2 focus:ring-2 focus:ring-red-300 transition-colors"
-                          placeholder="Jelaskan alasan percepatan magang..."></textarea>
-                
-                <template x-if="errors.alasan">
-                    <p class="text-red-500 text-xs mt-1" x-text="errors.alasan"></p>
-                </template>
-                
-                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>Minimal 10 karakter</span>
-                    <span x-text="`${alasan.length}/500`"></span>
+            <!-- Modal Tambah -->
+            <div x-show="showTambah" 
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                <div class="bg-white p-5 rounded shadow-md w-[28rem] mx-4">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        ➕ Ajukan Tambah Periode
+                    </h2>
+                    <form action="{{ route('magang.periode.tambah') }}" method="POST" enctype="multipart/form-data"
+                          x-data="tambahPeriodeForm()" @submit="validateTambahPeriode">
+                        @csrf
+
+                        @if($periodeAktif)
+                            <input type="hidden" id="tanggal_selesai_terakhir" value="{{ $periodeAktif->tanggal_selesai }}">
+                        @endif
+
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-700">Alasan *</label>
+                            <textarea name="alasan" 
+                                      rows="3" 
+                                      x-model="alasan"
+                                      @input="validateAlasan()"
+                                      :class="{
+                                          'border-red-300': errors.alasan,
+                                          'border-green-300': isValid.alasan,
+                                          'border-gray-300': !errors.alasan && !isValid.alasan
+                                      }"
+                                      required 
+                                      class="w-full border rounded p-2 focus:ring-2 focus:ring-green-300 transition-colors"
+                                      placeholder="Jelaskan alasan penambahan periode..."></textarea>
+                            
+                            <template x-if="errors.alasan">
+                                <p class="text-red-500 text-xs mt-1" x-text="errors.alasan"></p>
+                            </template>
+                            
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>Minimal 10 karakter</span>
+                                <span x-text="`${alasan.length}/500`"></span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Tanggal Mulai *</label>
+                                <input type="date" 
+                                       name="tanggal_mulai" 
+                                       x-model="tanggalMulai"
+                                       @change="validateTanggalTambahPeriode()"
+                                       :class="{
+                                           'border-red-300': errors.tanggalMulai,
+                                           'border-green-300': isValid.tanggalMulai,
+                                           'border-gray-300': !errors.tanggalMulai && !isValid.tanggalMulai
+                                       }"
+                                       required 
+                                       class="w-full border rounded p-2 focus:ring-2 focus:ring-green-300 transition-colors">
+                                
+                                <template x-if="errors.tanggalMulai">
+                                    <p class="text-red-500 text-xs mt-1" x-text="errors.tanggalMulai"></p>
+                                </template>
+                                
+                                <template x-if="isValid.tanggalMulai">
+                                    <p class="text-green-500 text-xs mt-1" x-text="isValid.tanggalMulai"></p>
+                                </template>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Tanggal Selesai *</label>
+                                <input type="date" 
+                                       name="tanggal_selesai" 
+                                       x-model="tanggalSelesai"
+                                       @change="validateTanggalTambahPeriode()"
+                                       :class="{
+                                           'border-red-300': errors.tanggalSelesai,
+                                           'border-green-300': isValid.tanggalSelesai,
+                                           'border-gray-300': !errors.tanggalSelesai && !isValid.tanggalSelesai
+                                       }"
+                                       required 
+                                       class="w-full border rounded p-2 focus:ring-2 focus:ring-green-300 transition-colors">
+                                
+                                <template x-if="errors.tanggalSelesai">
+                                    <p class="text-red-500 text-xs mt-1" x-text="errors.tanggalSelesai"></p>
+                                </template>
+                                
+                                <template x-if="isValid.tanggalSelesai">
+                                    <p class="text-green-500 text-xs mt-1" x-text="isValid.tanggalSelesai"></p>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Info Periode Saat Ini -->
+                        @if($periodeAktif)
+                        <div class="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <p class="text-yellow-700 text-sm">
+                                <strong>Periode Saat Ini:</strong><br>
+                                Mulai: {{ $periodeAktif->tanggal_mulai }}<br>
+                                Selesai: {{ $periodeAktif->tanggal_selesai }}
+                            </p>
+                        </div>
+                        @endif
+
+                        {{-- Input Upload Surat --}}
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                📎 Upload Surat Permohonan (Opsional)
+                            </label>
+                            <input type="file" 
+                                   name="surat" 
+                                   @change="validateSurat($el)"
+                                   accept=".pdf"
+                                   class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                            
+                            <template x-if="errors.surat">
+                                <p class="text-red-500 text-xs mt-1" x-text="errors.surat"></p>
+                            </template>
+                            
+                            <p class="text-xs text-gray-500 mt-1">
+                                Format: PDF saja (Maks: 2MB)
+                            </p>
+                        </div>
+
+                        <div class="flex justify-end mt-4 gap-2">
+                            <button type="button" @click="showTambah = false"
+                                    class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 transition">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                    :disabled="!formValid"
+                                    :class="{
+                                        'bg-green-500 hover:bg-green-600': formValid,
+                                        'bg-green-300 cursor-not-allowed': !formValid
+                                    }"
+                                    class="px-4 py-2 text-white rounded transition font-medium">
+                                Kirim Permohonan
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-            
-            {{-- Input Upload Surat --}}
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    📎 Upload Surat Permohonan (Opsional)
-                </label>
-                <input type="file" 
-                       name="surat" 
-                       @change="validateSurat($el)"
-                       accept=".pdf"
-                       class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
-                
-                <template x-if="errors.surat">
-                    <p class="text-red-500 text-xs mt-1" x-text="errors.surat"></p>
-                </template>
-                
-                <p class="text-xs text-gray-500 mt-1">
-                    Format: PDF saja (Maks: 2MB)
-                </p>
-            </div>
 
-            <div class="flex justify-end mt-4 gap-2">
-                <button type="button" @click="showPercepat = false"
-                        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 transition">
-                    Batal
-                </button>
-                <button type="submit"
-                        :disabled="!formValid"
-                        :class="{
-                            'bg-red-500 hover:bg-red-600': formValid,
-                            'bg-red-300 cursor-not-allowed': !formValid
-                        }"
-                        class="px-4 py-2 text-white rounded transition font-medium">
-                    Kirim Permohonan
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal Tambah dengan Real-time Validation -->
-<div x-show="showTambah" 
-     x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="opacity-0 scale-95"
-     x-transition:enter-end="opacity-100 scale-100"
-     class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-    <div class="bg-white p-5 rounded shadow-md w-[28rem] mx-4">
-        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-            ➕ Ajukan Tambah Periode
-        </h2>
-        <form action="{{ route('magang.periode.tambah') }}" method="POST" enctype="multipart/form-data"
-              x-data="tambahPeriodeForm()" @submit="validateTambahPeriode">
-            @csrf
-
-            @if($periodeAktif)
-                <input type="hidden" id="tanggal_selesai_terakhir" value="{{ $periodeAktif->tanggal_selesai }}">
-            @endif
-
-            <div class="mb-3">
-                <label class="block text-sm font-medium text-gray-700">Alasan *</label>
-                <textarea name="alasan" 
-                          rows="3" 
-                          x-model="alasan"
-                          @input="validateAlasan()"
-                          :class="{
-                              'border-red-300': errors.alasan,
-                              'border-green-300': isValid.alasan,
-                              'border-gray-300': !errors.alasan && !isValid.alasan
-                          }"
-                          required 
-                          class="w-full border rounded p-2 focus:ring-2 focus:ring-green-300 transition-colors"
-                          placeholder="Jelaskan alasan penambahan periode..."></textarea>
-                
-                <template x-if="errors.alasan">
-                    <p class="text-red-500 text-xs mt-1" x-text="errors.alasan"></p>
-                </template>
-                
-                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>Minimal 10 karakter</span>
-                    <span x-text="`${alasan.length}/500`"></span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Tanggal Mulai *</label>
-                    <input type="date" 
-                           name="tanggal_mulai" 
-                           x-model="tanggalMulai"
-                           @change="validateTanggalTambahPeriode()"
-                           :class="{
-                               'border-red-300': errors.tanggalMulai,
-                               'border-green-300': isValid.tanggalMulai,
-                               'border-gray-300': !errors.tanggalMulai && !isValid.tanggalMulai
-                           }"
-                           required 
-                           class="w-full border rounded p-2 focus:ring-2 focus:ring-green-300 transition-colors">
+            <!-- Modal Mundur -->
+            <div x-show="showMundur" 
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                <div class="bg-white p-5 rounded shadow-md w-[28rem] mx-4">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        🚪 Ajukan Pengunduran Diri
+                    </h2>
                     
-                    <template x-if="errors.tanggalMulai">
-                        <p class="text-red-500 text-xs mt-1" x-text="errors.tanggalMulai"></p>
-                    </template>
-                    
-                    <template x-if="isValid.tanggalMulai">
-                        <p class="text-green-500 text-xs mt-1" x-text="isValid.tanggalMulai"></p>
-                    </template>
+                    <!-- Warning Box -->
+                    <div class="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <span class="text-orange-500 text-xl mt-0.5">⚠️</span>
+                            <div>
+                                <h3 class="font-semibold text-orange-800">Perhatian!</h3>
+                                <p class="text-orange-700 text-sm mt-1">
+                                    Pengajuan mundur dari program magang akan mengakhiri seluruh aktivitas magang Anda.
+                                    Pastikan ini adalah keputusan yang sudah dipertimbangkan matang-matang.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form action="{{ route('magang.periode.mundur') }}" method="POST" enctype="multipart/form-data"
+                          x-data="mundurForm()" @submit="validateMundur">
+                        @csrf
+
+                        @if($periodeAktif)
+                            <input type="hidden" name="periode_id" value="{{ $periodeAktif->id }}">
+                        @endif
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Alasan Pengunduran Diri *</label>
+                            <textarea name="alasan" 
+                                      rows="4" 
+                                      x-model="alasan"
+                                      @input="validateAlasan()"
+                                      :class="{
+                                          'border-red-300': errors.alasan,
+                                          'border-green-300': isValid.alasan,
+                                          'border-gray-300': !errors.alasan && !isValid.alasan
+                                      }"
+                                      required 
+                                      class="w-full border rounded p-3 focus:ring-2 focus:ring-orange-300 transition-colors"
+                                      placeholder="Jelaskan alasan mengundurkan diri dari program magang..."></textarea>
+                            
+                            <template x-if="errors.alasan">
+                                <p class="text-red-500 text-xs mt-1" x-text="errors.alasan"></p>
+                            </template>
+                            
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>Minimal 20 karakter</span>
+                                <span x-text="`${alasan.length}/500`"></span>
+                            </div>
+                        </div>
+
+                        {{-- Input Upload Surat --}}
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                📎 Upload Surat Pengunduran Diri (Opsional)
+                            </label>
+                            <input type="file" 
+                                   name="surat" 
+                                   @change="validateSurat($el)"
+                                   accept=".pdf"
+                                   class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100">
+                            
+                            <template x-if="errors.surat">
+                                <p class="text-red-500 text-xs mt-1" x-text="errors.surat"></p>
+                            </template>
+                            
+                            <p class="text-xs text-gray-500 mt-1">
+                                Format: PDF saja (Maks: 2MB)
+                            </p>
+                        </div>
+
+                        <!-- Confirmation Checkbox -->
+                        <div class="mb-4">
+                            <label class="flex items-start gap-3">
+                                <input type="checkbox" 
+                                       x-model="confirmed"
+                                       class="mt-1 rounded border-gray-300 text-orange-500 focus:ring-orange-500 transition">
+                                <span class="text-sm text-gray-700">
+                                    Saya menyadari bahwa pengunduran diri ini akan mengakhiri seluruh aktivitas magang saya dan tidak dapat dibatalkan setelah disetujui.
+                                </span>
+                            </label>
+                            <template x-if="errors.confirmation">
+                                <p class="text-red-500 text-xs mt-1" x-text="errors.confirmation"></p>
+                            </template>
+                        </div>
+
+                        <div class="flex justify-end mt-4 gap-2">
+                            <button type="button" @click="showMundur = false"
+                                    class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 transition">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                    :disabled="!formValid"
+                                    :class="{
+                                        'bg-orange-500 hover:bg-orange-600': formValid,
+                                        'bg-orange-300 cursor-not-allowed': !formValid
+                                    }"
+                                    class="px-4 py-2 text-white rounded transition font-medium">
+                                Ajukan Pengunduran Diri
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Tanggal Selesai *</label>
-                    <input type="date" 
-                           name="tanggal_selesai" 
-                           x-model="tanggalSelesai"
-                           @change="validateTanggalTambahPeriode()"
-                           :class="{
-                               'border-red-300': errors.tanggalSelesai,
-                               'border-green-300': isValid.tanggalSelesai,
-                               'border-gray-300': !errors.tanggalSelesai && !isValid.tanggalSelesai
-                           }"
-                           required 
-                           class="w-full border rounded p-2 focus:ring-2 focus:ring-green-300 transition-colors">
-                    
-                    <template x-if="errors.tanggalSelesai">
-                        <p class="text-red-500 text-xs mt-1" x-text="errors.tanggalSelesai"></p>
-                    </template>
-                    
-                    <template x-if="isValid.tanggalSelesai">
-                        <p class="text-green-500 text-xs mt-1" x-text="isValid.tanggalSelesai"></p>
-                    </template>
-                </div>
             </div>
 
-            <!-- Info Periode Saat Ini -->
-            @if($periodeAktif)
-            <div class="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p class="text-yellow-700 text-sm">
-                    <strong>Periode Saat Ini:</strong><br>
-                    Mulai: {{ $periodeAktif->tanggal_mulai }}<br>
-                    Selesai: {{ $periodeAktif->tanggal_selesai }}
-                </p>
-            </div>
-            @endif
-
-            {{-- Input Upload Surat --}}
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    📎 Upload Surat Permohonan (Opsional)
-                </label>
-                <input type="file" 
-                       name="surat" 
-                       @change="validateSurat($el)"
-                       accept=".pdf"
-                       class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-                
-                <template x-if="errors.surat">
-                    <p class="text-red-500 text-xs mt-1" x-text="errors.surat"></p>
-                </template>
-                
-                <p class="text-xs text-gray-500 mt-1">
-                    Format: PDF saja (Maks: 2MB)
-                </p>
-            </div>
-
-            <div class="flex justify-end mt-4 gap-2">
-                <button type="button" @click="showTambah = false"
-                        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 transition">
-                    Batal
-                </button>
-                <button type="submit"
-                        :disabled="!formValid"
-                        :class="{
-                            'bg-green-500 hover:bg-green-600': formValid,
-                            'bg-green-300 cursor-not-allowed': !formValid
-                        }"
-                        class="px-4 py-2 text-white rounded transition font-medium">
-                    Kirim Permohonan
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+        </div>
+    @endif
+@endif
 
 <script>
 // Alpine.js Components untuk Form Validation
@@ -1030,9 +1195,85 @@ function tambahPeriodeForm() {
         }
     }
 }
+
+function mundurForm() {
+    return {
+        alasan: '',
+        confirmed: false,
+        errors: {
+            alasan: '',
+            surat: '',
+            confirmation: ''
+        },
+        isValid: {
+            alasan: ''
+        },
+        formValid: false,
+
+        validateAlasan() {
+            this.errors.alasan = '';
+            this.isValid.alasan = '';
+
+            if (!this.alasan) {
+                this.errors.alasan = 'Alasan pengunduran diri harus diisi';
+            } else if (this.alasan.length < 20) {
+                this.errors.alasan = 'Alasan minimal 20 karakter';
+            } else if (this.alasan.length > 500) {
+                this.errors.alasan = 'Alasan maksimal 500 karakter';
+            } else {
+                this.isValid.alasan = '✅ Alasan valid';
+            }
+            
+            this.checkFormValidity();
+        },
+
+        validateSurat(fileInput) {
+            this.errors.surat = '';
+            
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const fileSize = file.size / 1024 / 1024; // MB
+                const fileType = file.type;
+                
+                if (fileType !== 'application/pdf') {
+                    this.errors.surat = 'File harus berupa PDF';
+                } else if (fileSize > 2) {
+                    this.errors.surat = 'Ukuran file maksimal 2MB';
+                }
+            }
+            
+            this.checkFormValidity();
+        },
+
+        checkFormValidity() {
+            this.errors.confirmation = this.confirmed ? '' : 'Anda harus menyetujui pernyataan ini';
+            
+            this.formValid = 
+                !this.errors.alasan && 
+                !this.errors.surat && 
+                !this.errors.confirmation &&
+                this.alasan.length >= 20 &&
+                this.confirmed;
+        },
+
+        validateMundur(e) {
+            this.validateAlasan();
+            this.checkFormValidity();
+            
+            if (!this.formValid) {
+                e.preventDefault();
+                // Scroll ke error pertama
+                const firstError = document.querySelector('.border-red-300');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstError.focus();
+                }
+            }
+        }
+    }
+}
 </script>
-    @endif
-@endif
+
   <!-- Riwayat Permohonan -->
 <div class="mt-8">
     <h2 class="text-lg font-semibold mb-3">Riwayat Permohonan Periode</h2>

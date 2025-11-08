@@ -87,19 +87,6 @@
                ✏️ Perbarui Data
             </a>
         </div>
-    @elseif ($pelamar->status === 'diterima')
-        <div class="bg-green-50 border border-green-200 p-6 rounded-2xl shadow-inner">
-            <div class="flex items-center mb-3">
-                <div class="w-10 h-10 bg-green-100 text-green-600 flex items-center justify-center rounded-full animate-spin-slow">
-                    🎉
-                </div>
-                <h2 class="ml-3 text-xl font-semibold text-green-700">Lamaran Diterima!</h2>
-            </div>
-            <p class="text-gray-700 leading-relaxed">
-                Selamat! Lamaranmu telah diterima 🎊  
-                Kami akan segera menghubungi kamu untuk tahap berikutnya.
-            </p>
-        </div>
 
     @else
         <div class="bg-gray-50 border border-gray-200 p-6 rounded-2xl shadow-inner text-center text-gray-600">

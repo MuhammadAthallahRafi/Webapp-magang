@@ -93,7 +93,9 @@ Route::post('/admin/activate-today-periods', [PeriodeActivationController::class
 
     // ================== Admin ================== //
     // Masuk Dashboard Admin
-   Route::get('/dashboard/admin', [AdminController::class, 'index'])->name('dashboard.admin');
+   Route::get('/dashboard/admin', [AdminController::class, 'index'])
+        ->name('dashboard.admin');
+
     //========= Route Power Pelamar (Admin) ============//
     // Halaman Admin melihat daftar pelamar
     Route::get('/admin/pelamar', [PelamarController::class, 'index'])
@@ -107,12 +109,7 @@ Route::post('/admin/activate-today-periods', [PeriodeActivationController::class
     // Tolak Pelamar
     Route::post('/admin/pelamar/{id}/tolak', [PelamarController::class, 'tolak'])
         ->name('admin.pelamar.tolak');
-
-    // mengambil data pelamar    
-    //Route::get('/admin/peserta-magang', [PelamarController::class, 'daftarMagang'])
-        //->name('admin.peserta-magang');
     // route untuk perbaikan pelamar
-
     Route::post('/admin/pelamar/{id}/perbaikan', [PelamarController::class, 'perbaikan'])
     ->name('admin.pelamar.perbaikan');
     // route untuk override tanggal mulai
@@ -121,6 +118,13 @@ Route::post('/admin/activate-today-periods', [PeriodeActivationController::class
     // route untuk override tanggal selesai
     Route::put('pelamar/{id}/update-tanggal-selesai', [PelamarController::class, 'updateTanggalSelesai'])
     ->name('pelamar.updateTanggalSelesai');
+
+    // mengambil data pelamar    
+    //Route::get('/admin/peserta-magang', [PelamarController::class, 'daftarMagang'])
+        //->name('admin.peserta-magang');
+
+    
+   
 
 
     
@@ -157,21 +161,22 @@ Route::post('/admin/activate-today-periods', [PeriodeActivationController::class
     // Halaman Admin melihat Detail peserta magang
     Route::get('/admin/peserta-magang/{id}', [PesertaController::class, 'show'])
         ->name('admin.peserta-magang.lihat');
-    // Riwayat Absensi peserta Magang
-    Route::get('/admin/peserta-magang/{id}/absensi', [PesertaController::class, 'absensi'])
-        ->name('admin.peserta-magang.absensi');
-    // Ambil data peserta dan semua periode magangnya
-    Route::get('/admin/peserta-magang/{id}/periode', [PesertaController::class, 'periode'])
-        ->name('admin.peserta-magang.periode');
-    // Route Admin Untuk Update Keterangan
-    Route::post('/admin/peserta-magang/{id}/update-keterangan', [PesertaController::class, 'updateKeterangan'])
-    ->name('admin.peserta-magang.update-keterangan');
     // Route Admin Untuk meluluskan
     Route::post('/admin/peserta-magang/{id}/lulus', [PesertaController::class, 'lulus'])
     ->name('admin.peserta-magang.lulus');
     // Route Admin Untuk memundurkan
     Route::post('/admin/peserta-magang/{id}/mundur', [PesertaController::class, 'mundur'])
     ->name('admin.peserta-magang.mundur');
+    // Riwayat Absensi peserta Magang
+    Route::get('/admin/peserta-magang/{id}/absensi', [PesertaController::class, 'absensi'])
+        ->name('admin.peserta-magang.absensi');
+    // Route Admin Untuk Update Keterangan
+    Route::post('/admin/peserta-magang/{id}/update-keterangan', [PesertaController::class, 'updateKeterangan'])
+    ->name('admin.peserta-magang.update-keterangan');
+    // Ambil data peserta dan semua periode magangnya
+    Route::get('/admin/peserta-magang/{id}/periode', [PesertaController::class, 'periode'])
+        ->name('admin.peserta-magang.periode');
+    
 
 
     //========= Route Power permohonan periode (Admin) ============//
@@ -184,6 +189,7 @@ Route::post('/admin/activate-today-periods', [PeriodeActivationController::class
     //Tolak
     Route::post('/admin/permohonan/{id}/reject', [AdminPermohonanPeriodeController::class, 'reject'])
     ->name('admin.permohonan-periode.reject');
+
 
     // lihat detail peserta yang melamar kembali (controller pinjaman)
     Route::get('/admin/permohonan-periode/{id}/lihat', [AdminPeriodeReviewController::class, 'lihat'])
@@ -216,11 +222,9 @@ Route::post('/admin/activate-today-periods', [PeriodeActivationController::class
 
     });
 
-   // ========= Route Power Akun User (Admin) ========= //
-Route::prefix('admin')
-    ->name('admin.')
-    ->middleware(['auth', 'role:admin']) // opsional: tambahkan middleware jika perlu
-    ->group(function () {
+        // ========= Route Power Akun User (Admin) ========= //
+        Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin']) // opsional: tambahkan middleware jika perlu
+            ->group(function () {
 
         // 🔹 Resource utama (index, edit, update, destroy)
         Route::resource('akun-user', AkunUserController::class)
@@ -400,11 +404,6 @@ Route::middleware(['auth', 'role:pelamar'])->group(function () {
         if ($user->status === 'off') {
             return redirect()->route('pelamar.center', $user->id);
         }
-
-        if (\App\Models\Pelamar::where('user_id', $user->id)->exists()) {
-            return redirect()->route('form.terimakasih');
-        }
-
         return view('pelamar.form-pendaftaran');
     })->name('form.pendaftaran');
 

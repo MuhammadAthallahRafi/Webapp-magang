@@ -119,48 +119,7 @@ class PendaftaranController extends Controller
     }
 
     
-    public function terimaKasih()
-    {
-        $pelamar = Pelamar::where('user_id', auth()->id())->first();
-        return view('pelamar.center', compact('pelamar'));
-    }
 
-  public function showPenolakan($id)
-{
-    // Ambil pelamar berdasarkan id pelamar (sesuai kebutuhan kamu)
-    $pelamar = \App\Models\Pelamar::with('user')->findOrFail($id);
-
-    // ambil user lewat relasi
-    $user = $pelamar->user;
-
-    // ambil alasan dari model pelamar (fallback teks jika kosong)
-    $alasan = $pelamar->alasan_penolakan ?? 'Tidak ada alasan diberikan';
-
-    // kirim semua variabel yang mungkin dibutuhkan view
-    return view('pelamar.penolakan', [
-        'alasan'  => $alasan,
-        'id'      => $id,
-        'user'    => $user,
-        'pelamar' => $pelamar,
-    ]);
-}
-
-
-   public function showPerbaikan($id)
-{
-    // Ambil pelamar langsung berdasarkan id pelamar
-    $pelamar = \App\Models\Pelamar::with('user')->findOrFail($id);
-
-    $alasan = $pelamar->alasan_perbaikan ?? 'Tidak ada alasan diberikan';
-    $user = $pelamar->user; // ambil data user-nya dari relasi
-
-    return view('pelamar.perbaikan', [
-        'alasan'  => $alasan,
-        'id'      => $id,
-        'user'    => $user,
-        'pelamar' => $pelamar,
-    ]);
-}
 
 
 
