@@ -257,28 +257,31 @@ class PesertaMagangController extends Controller
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function tambahPendidikan(Request $request, $id)
-    {
-        $request->validate([
-            'pendidikan_baru' => 'required|string|max:255',
-        ]);
+   public function tambahPendidikan(Request $request, $id)
+{
+    $request->validate([
+        'pendidikan_baru' => 'required|string|max:255',
+    ]);
 
-        $peserta = Peserta::findOrFail($id);
-        $pendidikanBaru = trim($request->pendidikan_baru);
+    $peserta = Peserta::findOrFail($id);
+    $pendidikanBaru = trim($request->pendidikan_baru);
 
-        // Pisahkan data kampus yang sudah ada
-        $list = array_map('trim', explode(',', $peserta->kampus ?? ''));
-        
-        // Tambahkan pendidikan baru jika belum ada (hindari duplikat)
-        if (!in_array($pendidikanBaru, $list)) {
-            $list[] = $pendidikanBaru;
-        }
+    // Pisahkan data kampus yang sudah ada
+    $list = array_map('trim', explode(',', $peserta->kampus ?? ''));
 
-        // Update data kampus
-        $peserta->update([
-            'kampus' => implode(', ', $list),
-        ]);
-
-        return redirect()->route('magang.data-diri')->with('success', 'Pendidikan baru berhasil ditambahkan.');
+    // Tambahkan pendidikan baru jika belum ada (hindari duplikat)
+    if (!in_array($pendidikanBaru, $list)) {
+        $list[] = $pendidikanBaru;
     }
+
+    // Update data kampus
+    $peserta->update([
+        'kampus' => implode(', ', $list),
+    ]);
+
+    return redirect()
+        ->route('magang.data-diri')
+        ->with('success', 'Pendidikan baru berhasil ditambahkan.');
+}
+
 }

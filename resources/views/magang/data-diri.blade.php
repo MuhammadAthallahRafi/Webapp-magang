@@ -131,14 +131,12 @@
             <div class="px-6 py-4">
                 <form action="{{ route('magang.data-diri.tambahPendidikan', $peserta->id) }}" method="POST" class="space-y-4">
                     @csrf
-                    @method('PUT')
                     
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Instansi Pendidikan *</label>
-                            <input type="text" name="kampus" value="{{ old('kampus', $peserta->kampus) }}" required
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 outline-none">
-                        </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Instansi Pendidikan *</label>
+                        <input type="text" name="pendidikan_baru" placeholder="Contoh: Universitas Indonesia" required
+                               class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 outline-none">
+                    </div>
 
                     <!-- Modal Footer -->
                     <div class="flex justify-end space-x-3 pt-4 mt-6 border-t border-gray-200">
@@ -156,6 +154,8 @@
             </div>
         </div>
     </div>
+</div>
+
 </div>
 </div>
 
