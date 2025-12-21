@@ -5,10 +5,7 @@
 @section('content')
 <div class="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
     <!-- Header -->
-
-    <!-- tambahkan di admin dashboard atau halaman permohonan -->
-<div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-    <div class="flex justify-between items-center">
+     <!-- <div class="flex justify-between items-center">
         <div>
             <h3 class="font-semibold text-green-800">🔄 Aktivasi Periode Hari Ini</h3>
             <p class="text-sm text-green-600 mt-1">
@@ -22,7 +19,11 @@
                 🚀 Aktifkan Periode Hari Ini
             </button>
         </form>
-    </div>
+    </div> -->
+
+    <!-- tambahkan di admin dashboard atau halaman permohonan -->
+<div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+    
     
     <!-- Tampilkan output jika ada -->
     @if(session('output'))
