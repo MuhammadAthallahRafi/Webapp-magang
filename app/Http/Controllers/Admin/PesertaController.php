@@ -9,9 +9,11 @@ use App\Models\Pelamar;
 use App\Models\PeriodeMagang;
 use App\Models\PermohonanPeriode;
 use App\Models\Penilaian;
+use App\Models\Absensi;
 use Illuminate\Support\Str;
+use Illuminate\Support\str_slug; // Import helper
 use Illuminate\Http\Request;
-
+use Barryvdh\DomPDF\Facade\Pdf;
 class PesertaController extends Controller
 {
     public function index(Request $request)
@@ -80,7 +82,58 @@ class PesertaController extends Controller
 
         return redirect()->back()->with('success', 'Keterangan diperbarui.');
     }
+public function cetakAbsensi(Request $request, $id)
+{
+    // Validasi
+    $validated = $request->validate([
+        'start_date' => 'required|date',
+        'end_date'   => 'required|date|after_or_equal:start_date',
+    ]);
 
+    // Cari peserta
+    $peserta = Peserta::findOrFail($id);
+
+    // Ambil absensi
+    $absensi = Absensi::where('peserta_id', $id)
+        ->whereBetween('tanggal', [
+            $validated['start_date'],
+            $validated['end_date']
+        ])
+        ->orderBy('tanggal', 'asc')
+        ->get();
+
+    // Error jika tidak ada data
+    if ($absensi->isEmpty()) {
+        return redirect()->back()
+            ->with('error', 'Tidak ada data absensi pada rentang tanggal tersebut.');
+    }
+
+    // Data untuk view PDF
+    $data = [
+        'peserta' => $peserta,
+        'absensi' => $absensi,
+        'start' => $validated['start_date'], // Dikirim sebagai $start
+        'end' => $validated['end_date'],     // Dikirim sebagai $end
+        'tanggal_cetak' => now()->format('d-m-Y H:i:s'),
+    ];
+
+    // PERBAIKAN: Ganti str_slug() dengan alternatif yang aman
+    // Opsi 1: Ganti spasi dengan tanda minus (sederhana)
+    $cleanName = str_replace(' ', '-', $peserta->nama);
+    
+    // Opsi 2: Atau gunakan ID peserta (lebih aman)
+    // $cleanName = 'peserta-' . $peserta->id;
+    
+    $filename = 'absensi-' . $cleanName . 
+               '-' . $validated['start_date'] . 
+               '-' . $validated['end_date'] . '.pdf';
+
+    // Generate PDF
+    $pdf = Pdf::loadView('admin.absensi.pdf', $data)
+              ->setPaper('A4', 'portrait');
+
+    return $pdf->download($filename);
+}
 
 
         public function periode($id)

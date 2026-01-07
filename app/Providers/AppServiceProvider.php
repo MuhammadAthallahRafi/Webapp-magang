@@ -28,10 +28,14 @@ class AppServiceProvider extends ServiceProvider
         // ===== 1. FORCE HTTPS DI LOCAL =====
         
         
-          if (config('app.env') === 'local') {
-          URL::forceScheme('https');
-         }
-       
+          
+       /**
+     
+     * if (config('app.env') === 'local') {
+      *     URL::forceScheme('https');
+     *     }
+     
+     */
 
         // ===== 2. AUTO-ACTIVATE PERIODE DI LOCAL =====
         if (app()->environment('local')) {

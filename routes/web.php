@@ -173,6 +173,9 @@ Route::post('/admin/activate-today-periods', [PeriodeActivationController::class
     // Route Admin Untuk Update Keterangan
     Route::post('/admin/peserta-magang/{id}/update-keterangan', [PesertaController::class, 'updateKeterangan'])
     ->name('admin.peserta-magang.update-keterangan');
+    // Rute untuk cetak absensi (POST karena ada parameter tanggal)
+Route::post('/admin/peserta-magang/{id}/cetak-absensi', [PesertaController::class, 'cetakAbsensi'])
+     ->name('admin.peserta-magang.cetak-absensi');
     // Ambil data peserta dan semua periode magangnya
     Route::get('/admin/peserta-magang/{id}/periode', [PesertaController::class, 'periode'])
         ->name('admin.peserta-magang.periode');

@@ -15,7 +15,7 @@
     <div class="content">
         <p>Diberikan kepada:</p>
         <h2>{{ $peserta->nama }}</h2>
-        <p>NIM: {{ $peserta->nik }}</p>
+        <p>nik: {{ $peserta->nik }}</p>
         <p>Kampus: {{ $peserta->kampus }}</p>
         <p>Jurusan: {{ $peserta->jurusan }}</p>
 

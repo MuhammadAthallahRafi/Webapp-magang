@@ -128,7 +128,7 @@ class PelamarController extends Controller
         'nik'               => $pelamar->nik,
         'kampus'            => $pelamar->kampus,
         'jurusan'           => $pelamar->jurusan,
-        'batch'             => $pelamar->batch,
+        
         'no_telp'           => $pelamar->no_telp,
         'alamat'            => $pelamar->alamat,
         'divisi'            => $request->input('divisi'),
